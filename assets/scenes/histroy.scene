@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.SceneAsset",
-    "_name": "config-001",
+    "_name": "histroy",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -11,7 +11,7 @@
   },
   {
     "__type__": "cc.Scene",
-    "_name": "config-001",
+    "_name": "setting",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -56,7 +56,7 @@
     "_globals": {
       "__id__": 239
     },
-    "_id": "495ee77d-6b09-468b-8edc-2cf1b2b997a7"
+    "_id": "2b0b3aa5-7a93-4e28-bdbc-41149baf0658"
   },
   {
     "__type__": "cc.Node",
