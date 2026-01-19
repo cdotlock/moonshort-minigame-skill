@@ -1,0 +1,92 @@
+CCEffect %{
+  techniques:
+  - name: transparent
+    passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendSrcAlpha: src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        blurParams: { value: [4.0, 393.0, 737.0, 0.0] }
+        maskTexture: { value: white }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 v_color;
+  out vec2 v_uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+    pos = cc_matViewProj * pos;
+    v_uv0 = a_texCoord;
+    v_color = a_color;
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+
+  in vec4 v_color;
+  in vec2 v_uv0;
+
+  #pragma builtin(local)
+  layout(set = 2, binding = 12) uniform sampler2D cc_spriteTexture;
+
+  uniform sampler2D maskTexture;
+
+  uniform Constant {
+    vec4 blurParams;
+  };
+
+  vec4 frag () {
+    // blurParams: x=blur(sigma), y=图片宽度, z=图片高度
+    float sigma = blurParams.x;
+    vec2 pixelSize = vec2(1.0 / blurParams.y, 1.0 / blurParams.z);
+    
+    // CSS blur 使用 sigma 作为标准差，采样范围约 3*sigma
+    // 使用两次分离式采样（水平+垂直）模拟效果
+    
+    vec4 color = vec4(0.0);
+    float totalWeight = 0.0;
+    
+    // 采样范围: -3sigma 到 +3sigma，每隔 0.5sigma 采样一次
+    // 约13个采样点
+    for (float i = -3.0; i <= 3.0; i += 0.5) {
+      for (float j = -3.0; j <= 3.0; j += 0.5) {
+        vec2 offset = vec2(i, j) * sigma * pixelSize;
+        
+        // 高斯权重: exp(-(x^2+y^2)/(2*sigma^2))
+        float weight = exp(-(i*i + j*j) / 2.0);
+        
+        color += texture(cc_spriteTexture, v_uv0 + offset) * weight;
+        totalWeight += weight;
+      }
+    }
+    
+    color /= totalWeight;
+    
+    // 蒙版裁剪
+    vec4 mask = texture(maskTexture, v_uv0);
+    color.a = color.a * mask.a;
+    
+    return color * v_color;
+  }
+}%

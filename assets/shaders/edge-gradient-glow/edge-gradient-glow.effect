@@ -1,0 +1,92 @@
+CCEffect %{
+  techniques:
+  - name: transparent
+    passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendSrcAlpha: src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        # 发光颜色，默认 #433010
+        glowColor: { value: [0.263, 0.188, 0.063, 1.0], editor: { type: color } }
+        # xy = 纹理尺寸, z = 模糊强度 (stdDeviation)
+        params: { value: [256.0, 256.0, 50.0, 0.0] }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 v_color;
+  out vec2 v_uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+    pos = cc_matViewProj * pos;
+    v_uv0 = a_texCoord;
+    v_color = a_color;
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+
+  in vec4 v_color;
+  in vec2 v_uv0;
+
+  #pragma builtin(local)
+  layout(set = 2, binding = 12) uniform sampler2D cc_spriteTexture;
+
+  uniform Constant {
+    vec4 glowColor;
+    vec4 params;  // xy = 纹理尺寸, z = 模糊强度
+  };
+
+  vec4 frag () {
+    // 使用 mediump 兼容的计算方式，避免精度问题
+    highp vec2 texSize = params.xy;
+    highp vec2 pixelSize = vec2(1.0) / texSize;
+    highp float blurRadius = params.z;
+    highp float invSamples = 1.0 / 4.0;  // 预计算避免除法精度问题
+    
+    // 高斯模糊采样 - 只采样 alpha 通道
+    highp float alpha = 0.0;
+    highp float totalWeight = 0.0;
+    
+    // 展开循环以提高 WebGL 兼容性
+    for (int x = -4; x <= 4; x++) {
+      for (int y = -4; y <= 4; y++) {
+        highp vec2 offsetDir = vec2(float(x), float(y));
+        highp vec2 offset = offsetDir * pixelSize * blurRadius * invSamples;
+        
+        // 高斯权重
+        highp float dist = length(offsetDir) * invSamples;
+        highp float weight = exp(-dist * dist * 2.0);
+        
+        highp vec2 sampleUV = v_uv0 + offset;
+        alpha += texture(cc_spriteTexture, sampleUV).a * weight;
+        totalWeight += weight;
+      }
+    }
+    
+    alpha = alpha / totalWeight;
+    
+    // 用配置的颜色填充，模糊后的 alpha 作为透明度
+    return vec4(glowColor.rgb, alpha) * v_color;
+  }
+}%

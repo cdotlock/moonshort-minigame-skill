@@ -1,0 +1,68 @@
+CCEffect %{
+  techniques:
+  - name: transparent
+    passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendSrcAlpha: src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 v_color;
+  out vec2 v_uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+    pos = cc_matViewProj * pos;
+    v_uv0 = a_texCoord;
+    v_color = a_color;
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+
+  in vec4 v_color;
+  in vec2 v_uv0;
+
+  vec4 frag () {
+    // 固定颜色 #111111
+    vec3 baseColor = vec3(0.067);
+    
+    // 顶部透明 -> 底部不透明
+    // 2D Sprite UV: y=0 在顶部, y=1 在底部
+    float y = v_uv0.y;
+    
+    // y=0 (顶部): alpha=0.0
+    // y=0.4 (40%): alpha=0.6
+    // y=1 (底部): alpha=1.0
+    float t1 = clamp(y / 0.4, 0.0, 1.0);
+    float t2 = clamp((y - 0.4) / 0.6, 0.0, 1.0);
+    
+    float alpha1 = mix(0.0, 0.6, t1);
+    float alpha2 = mix(0.6, 1.0, t2);
+    
+    float alpha = mix(alpha1, alpha2, step(0.4, y));
+    
+    return vec4(baseColor, alpha) * v_color;
+  }
+}%

@@ -1,0 +1,102 @@
+CCEffect %{
+  techniques:
+  - name: transparent
+    passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendSrcAlpha: src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        shadowParams: { value: [0.0, 4.0, 4.0, 0.5] }
+        shadowColor: { value: [0.0, 0.0, 0.0, 1.0], editor: { type: color } }
+        texSize: { value: [100.0, 100.0, 0.0, 0.0] }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 v_color;
+  out vec2 v_uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+    pos = cc_matViewProj * pos;
+    v_uv0 = a_texCoord;
+    v_color = a_color;
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+
+  in vec4 v_color;
+  in vec2 v_uv0;
+
+  #pragma builtin(local)
+  layout(set = 2, binding = 12) uniform sampler2D cc_spriteTexture;
+
+  uniform Constant {
+    vec4 shadowParams;
+    vec4 shadowColor;
+    vec4 texSize;
+  };
+
+  vec4 frag () {
+    // shadowParams: x=offsetX, y=offsetY, z=blur, w=shadowAlpha
+    float offsetX = shadowParams.x;
+    float offsetY = shadowParams.y;
+    float blur = shadowParams.z;
+    float shadowAlpha = shadowParams.w;
+    
+    // 像素偏移量转 UV 偏移
+    vec2 pixelSize = vec2(1.0 / texSize.x, 1.0 / texSize.y);
+    vec2 shadowOffset = vec2(offsetX, offsetY) * pixelSize;
+    
+    // 采样原图
+    vec4 original = texture(cc_spriteTexture, v_uv0);
+    
+    // 采样阴影（偏移 + 模糊）
+    vec2 shadowUV = v_uv0 - shadowOffset;
+    
+    // 简单高斯模糊（9点采样）
+    float blurSize = blur * pixelSize.x;
+    float shadow = 0.0;
+    
+    shadow += texture(cc_spriteTexture, shadowUV + vec2(-blurSize, -blurSize)).a * 0.05;
+    shadow += texture(cc_spriteTexture, shadowUV + vec2(0.0, -blurSize)).a * 0.1;
+    shadow += texture(cc_spriteTexture, shadowUV + vec2(blurSize, -blurSize)).a * 0.05;
+    
+    shadow += texture(cc_spriteTexture, shadowUV + vec2(-blurSize, 0.0)).a * 0.1;
+    shadow += texture(cc_spriteTexture, shadowUV).a * 0.4;
+    shadow += texture(cc_spriteTexture, shadowUV + vec2(blurSize, 0.0)).a * 0.1;
+    
+    shadow += texture(cc_spriteTexture, shadowUV + vec2(-blurSize, blurSize)).a * 0.05;
+    shadow += texture(cc_spriteTexture, shadowUV + vec2(0.0, blurSize)).a * 0.1;
+    shadow += texture(cc_spriteTexture, shadowUV + vec2(blurSize, blurSize)).a * 0.05;
+    
+    // 阴影颜色
+    vec4 shadowResult = vec4(shadowColor.rgb, shadow * shadowAlpha * shadowColor.a);
+    
+    // 混合：阴影在下，原图在上
+    vec3 finalColor = mix(shadowResult.rgb, original.rgb, original.a);
+    float finalAlpha = shadowResult.a * (1.0 - original.a) + original.a;
+    
+    return vec4(finalColor, finalAlpha) * v_color;
+  }
+}%

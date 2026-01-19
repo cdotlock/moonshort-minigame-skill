@@ -1,0 +1,107 @@
+CCEffect %{
+  techniques:
+  - name: transparent
+    passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendSrcAlpha: src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        # x=左上, y=右上, z=右下, w=左下 (像素值，与CSS border-radius一致)
+        radius: { value: [20.0, 20.0, 20.0, 20.0] }
+        # x=宽度, y=高度 (节点实际尺寸，用于保持圆角比例)
+        size: { value: [100.0, 100.0, 0.0, 0.0] }
+        # 边缘抗锯齿平滑度 (越大越模糊)
+        feather: { value: 0.005 }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 v_color;
+  out vec2 v_uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+    pos = cc_matViewProj * pos;
+    v_uv0 = a_texCoord;
+    v_color = a_color;
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+
+  in vec4 v_color;
+  in vec2 v_uv0;
+
+  #pragma builtin(local)
+  layout(set = 2, binding = 12) uniform sampler2D cc_spriteTexture;
+
+  uniform Constant {
+    vec4 radius;   // 四角圆角半径 (左上, 右上, 右下, 左下)
+    vec4 size;     // xy=宽高
+    float feather; // 抗锯齿
+  };
+
+  // 在像素空间计算点到圆角矩形的有符号距离 (与CSS border-radius一致)
+  float roundedBoxSDF(vec2 p, vec2 halfSize, vec4 r) {
+    // p: 以矩形中心为原点的像素坐标
+    // halfSize: 矩形半宽高 (像素)
+    // r: 四角圆角半径 (像素): 左上, 右上, 右下, 左下
+    
+    // 使用 mix + step 替代 if-else，提高 WebGL 兼容性
+    // step(edge, x) = x >= edge ? 1.0 : 0.0
+    float isRight = step(0.0, p.x);  // p.x >= 0 ? 1 : 0
+    float isTop = step(0.0, p.y);    // p.y >= 0 ? 1 : 0
+    
+    // 左上=r.x, 右上=r.y, 右下=r.z, 左下=r.w
+    float leftRadius = mix(r.w, r.x, isTop);   // 左侧: 下=r.w, 上=r.x
+    float rightRadius = mix(r.z, r.y, isTop);  // 右侧: 下=r.z, 上=r.y
+    float cornerRadius = mix(leftRadius, rightRadius, isRight);
+    
+    // 限制圆角半径不超过短边的一半
+    cornerRadius = min(cornerRadius, min(halfSize.x, halfSize.y));
+    
+    // 计算到圆角矩形边缘的距离
+    vec2 q = abs(p) - (halfSize - cornerRadius);
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - cornerRadius;
+  }
+
+  vec4 frag () {
+    vec4 texColor = texture(cc_spriteTexture, v_uv0);
+    
+    // 将UV转换为像素坐标 (以矩形中心为原点)
+    vec2 pixelCoord = (v_uv0 - 0.5) * size.xy;
+    
+    // 矩形半尺寸 (像素)
+    vec2 halfSize = size.xy * 0.5;
+    
+    // 在像素空间计算SDF距离 (radius直接使用像素值，与CSS一致)
+    float dist = roundedBoxSDF(pixelCoord, halfSize, radius);
+    
+    // 抗锯齿：feather作为像素平滑宽度
+    float smoothWidth = feather * min(size.x, size.y);
+    float alpha = 1.0 - smoothstep(-smoothWidth, smoothWidth, dist);
+    
+    texColor.a *= alpha;
+    
+    return texColor * v_color;
+  }
+}%

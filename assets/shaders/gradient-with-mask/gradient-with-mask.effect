@@ -1,0 +1,86 @@
+CCEffect %{
+  techniques:
+  - name: transparent
+    passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendSrcAlpha: src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        maskRatio: { value: [1.0, 0.1, 0.0, 0.0] }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 v_color;
+  out vec2 v_uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+    pos = cc_matViewProj * pos;
+    v_uv0 = a_texCoord;
+    v_color = a_color;
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+
+  in vec4 v_color;
+  in vec2 v_uv0;
+
+  #pragma builtin(local)
+  layout(set = 2, binding = 12) uniform sampler2D cc_spriteTexture;
+
+  uniform Constant {
+    vec4 maskRatio;
+  };
+
+  vec4 frag () {
+    // 固定颜色 #111111
+    vec3 baseColor = vec3(0.067);
+    
+    // 渐变：顶部透明 -> 底部不透明（正常铺满）
+    float y = v_uv0.y;
+    float t1 = clamp(y / 0.4, 0.0, 1.0);
+    float t2 = clamp((y - 0.4) / 0.6, 0.0, 1.0);
+    float alpha1 = mix(0.0, 0.6, t1);
+    float alpha2 = mix(0.6, 1.0, t2);
+    float gradientAlpha = mix(alpha1, alpha2, step(0.4, y));
+    
+    // 蒙版裁剪
+    // maskRatio.y = 展示区域高度 / 蒙版图高度
+    // 例如: 154 / 737 = 0.209
+    float ratio = maskRatio.y;
+    
+    // 采样蒙版图底部部分
+    // 当渐变 UV y=0 时，采样蒙版 y = 1-ratio
+    // 当渐变 UV y=1 时，采样蒙版 y = 1
+    float maskUvY = (1.0 - ratio) + v_uv0.y * ratio;
+    
+    // 采样蒙版
+    vec4 mask = texture(cc_spriteTexture, vec2(v_uv0.x, maskUvY));
+    
+    // 蒙版透明区域裁剪，不透明区域保留
+    float finalAlpha = gradientAlpha * mask.a;
+    
+    return vec4(baseColor, finalAlpha) * v_color;
+  }
+}%
