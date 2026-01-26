@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "603353125999",
+    "project_id": "moonshort-1",
+    "storage_bucket": "moonshort-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:603353125999:android:7be8faf3c0ed7492dfe99a",
+        "android_client_info": {
+          "package_name": "com.mobai.moonshort"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUvXquHdhgSyUpTvY1N1Uq68SS0rSZJkc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

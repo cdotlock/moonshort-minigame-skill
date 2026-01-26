@@ -1,4 +1,5 @@
 import { _decorator, Component, Label, Node } from 'cc';
+import { trackHomeCopyInvite, trackHomeInviteOpen } from '../analytics/UiEvents';
 const { ccclass, property, menu } = _decorator;
 
 @ccclass('RenderInviteFriend')
@@ -9,6 +10,9 @@ export class RenderInviteFriend extends Component {
 
     @property({ tooltip: '最大邀请数量' })
     inviteMax: number = 5;
+
+    @property({ tooltip: '邀请码（用于埋点，可为空）' })
+    inviteCode: string = '';
 
     @property({ type: Node, tooltip: '显示剩余次数的 Label 节点' })
     remainingLabelNode: Node | null = null;
@@ -27,6 +31,7 @@ export class RenderInviteFriend extends Component {
     open() {
         this.node.active = true;
         this.updateRemainingText();
+        trackHomeInviteOpen();
     }
 
     /**
@@ -41,6 +46,11 @@ export class RenderInviteFriend extends Component {
      */
     copyCode() {
         // TODO: 实现复制邀请码逻辑
+        const remaining = this.getRemaining();
+        trackHomeCopyInvite({
+            invite_code: this.inviteCode || undefined,
+            remaining,
+        });
     }
 
     /**
@@ -62,7 +72,11 @@ export class RenderInviteFriend extends Component {
      */
     private updateRemainingText() {
         if (!this._label) return;
-        const remaining = Math.max(0, this.inviteMax - this.inviteNum);
+        const remaining = this.getRemaining();
         this._label.string = `Remaining: ${remaining}/${this.inviteMax}`;
+    }
+
+    private getRemaining() {
+        return Math.max(0, this.inviteMax - this.inviteNum);
     }
 }

@@ -1,5 +1,6 @@
 import { _decorator, Component, Enum, NodeEventType } from 'cc';
 import { SceneHistory } from './SceneHistory';
+import { trackHomeRouterClick } from '../analytics/UiEvents';
 const { ccclass, property, menu } = _decorator;
 
 /**
@@ -55,6 +56,7 @@ export class ClickRouterTo extends Component {
         }
 
         this._loading = true;
+        trackHomeRouterClick(name, this.node);
         if (this.mode === RouterMode.Replace) {
             SceneHistory.replace(name, () => {
                 this._loading = false;

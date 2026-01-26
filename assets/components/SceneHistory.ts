@@ -1,4 +1,6 @@
-import { director, Director, game, Game } from 'cc';
+import { director, Director, game, Game, Scene } from 'cc';
+import { Analytics } from '../analytics/AnalyticsManager';
+import { trackHomeView } from '../analytics/UiEvents';
 
 /**
  * 场景历史记录管理器
@@ -28,7 +30,9 @@ class SceneHistoryManager {
     init() {
         if (this._inited) return;
         this._inited = true;
+        Analytics.init();
         director.on(Director.EVENT_BEFORE_SCENE_LOADING, this.onBeforeSceneLoading, this);
+        director.on(Director.EVENT_AFTER_SCENE_LAUNCH, this.onAfterSceneLaunch, this);
     }
 
     private onBeforeSceneLoading(sceneName: string) {
@@ -39,6 +43,12 @@ class SceneHistoryManager {
             }
         }
         this._current = sceneName;
+    }
+
+    private onAfterSceneLaunch(scene: Scene | string) {
+        const name = typeof scene === 'string' ? scene : scene?.name;
+        if (!name) return;
+        trackHomeView();
     }
 
     /**
