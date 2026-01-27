@@ -66,9 +66,17 @@ export class WebFirebaseAnalyticsProvider implements AnalyticsProvider {
                 }
                 return;
             }
-            this._analytics.logEvent(name, params);
+            
+            // 核心修改：在调试模式下，必须带上 debug_mode 参数，DebugView 才能看到
+            const finalParams = params ? { ...params } : {};
             if (ANALYTICS_DEBUG) {
-                console.log('[Analytics] Firebase Web logEvent:', name, params);
+                finalParams['debug_mode'] = true;
+            }
+
+            this._analytics.logEvent(name, finalParams);
+            
+            if (ANALYTICS_DEBUG) {
+                console.log('[Analytics] Firebase Web logEvent:', name, finalParams);
             }
         });
     }
