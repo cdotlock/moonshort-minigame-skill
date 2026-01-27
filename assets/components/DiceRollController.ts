@@ -188,8 +188,8 @@ export class DiceRollController extends Component {
             console.log('[DiceRoll] 切换到第', i + 1, '帧');
             this.diceSprite.spriteFrame = this.diceFrames[i];
             
-            // 等待 0.3 秒
-            await this.wait(300);
+            // 等待 0.1 秒
+            await this.wait(100);
         }
 
         console.log('[DiceRoll] 骰子动画播放完成');

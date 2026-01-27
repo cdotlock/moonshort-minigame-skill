@@ -456,9 +456,9 @@ export class GameSceneController extends Component {
             const hasNextNode = result.hasNextNode !== false; // 默认有下一个节点，除非后端明确返回 false
 
             if (hasNextNode) {
-                console.log('[GameSceneController] 有下一个节点，继续过渡叙事');
-                // 生成并显示过渡叙事
-                await this.startTransitionPhase(result.nodeIndex, result.resultType);
+                console.log('[GameSceneController] 有下一个节点，直接进入 A 卡阶段');
+                // 直接进入 A 卡阶段
+                await this.startACardPhase();
             } else {
                 console.log('[GameSceneController] 没有下一个节点，当前剧情已完成，返回首页');
                 // TODO: 返回首页的逻辑

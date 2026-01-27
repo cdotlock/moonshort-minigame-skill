@@ -3,7 +3,7 @@
  */
 export const APIConfig = {
     // API 基础 URL
-    BASE_URL: 'http://47.98.225.71',
+    BASE_URL: 'http://47.254.93.15',
     
     // API 端点
     ENDPOINTS: {
