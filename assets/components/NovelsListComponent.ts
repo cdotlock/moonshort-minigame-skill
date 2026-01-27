@@ -1,9 +1,11 @@
-import { _decorator, Component, Node, Prefab, instantiate, Label, Sprite, director } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Label, Sprite, director, ScrollView, UITransform, Rect } from 'cc';
 import { GameManager } from '../scripts/core/GameManager';
 import { NovelsAPI } from '../scripts/api/NovelsAPI';
 import { Novel } from '../scripts/types/api.types';
 import { NovelItemComponent } from './NovelItemComponent';
 import { SceneHistory } from './SceneHistory';
+import { trackIndexCardClick, trackIndexCardImpression } from '../analytics/UiEvents';
+import { ANALYTICS_DEBUG } from '../analytics/AnalyticsConfig';
 
 const { ccclass, property, menu } = _decorator;
 
@@ -29,6 +31,9 @@ export class NovelsListComponent extends Component {
     @property({ type: Node, tooltip: '错误提示节点' })
     errorNode: Node | null = null;
 
+    @property({ type: ScrollView, tooltip: '滚动视图组件（用于监听曝光）' })
+    scrollView: ScrollView | null = null;
+
     @property({ tooltip: '每页加载数量' })
     pageSize: number = 10;
 
@@ -40,6 +45,7 @@ export class NovelsListComponent extends Component {
     private totalPages: number = 1;
     private isLoading: boolean = false;
     private novels: Novel[] = [];
+    private _exposedIds: Set<string> = new Set();
 
     onLoad() {
         const gameManager = GameManager.getInstance();
@@ -53,6 +59,48 @@ export class NovelsListComponent extends Component {
         if (this.autoLoad) {
             this.loadNovels();
         }
+
+        if (this.scrollView) {
+            this.scrollView.node.on('scrolling', this.checkVisibleItems, this);
+        }
+    }
+
+    /**
+     * 检查当前可视区域内的卡片并触发曝光埋点
+     */
+    private checkVisibleItems() {
+        if (!this.scrollView || !this.containerNode) return;
+
+        const viewNode = this.scrollView.view?.node;
+        if (!viewNode) return;
+
+        const viewTransform = viewNode.getComponent(UITransform);
+        if (!viewTransform) return;
+
+        // 获取可视区域的世界包围盒
+        const viewBounds = viewTransform.getBoundingBoxToWorld();
+
+        this.containerNode.children.forEach(itemNode => {
+            const itemTransform = itemNode.getComponent(UITransform);
+            if (!itemTransform) return;
+
+            // 获取卡片的世界包围盒
+            const itemBounds = itemTransform.getBoundingBoxToWorld();
+
+            // 检查是否相交
+            const isIntersect = viewBounds.intersects(itemBounds);
+
+            if (isIntersect) {
+                const itemComponent = itemNode.getComponent(NovelItemComponent) || itemNode.getComponentInChildren(NovelItemComponent);
+                const novel = itemComponent?.getData();
+
+                if (novel && !this._exposedIds.has(novel.id)) {
+                    // 强制触发，不检查场景名，因为既然在这个组件里，肯定是在首页
+                    trackIndexCardImpression(novel.id, novel.title);
+                    this._exposedIds.add(novel.id);
+                }
+            }
+        });
     }
 
     /**
@@ -133,9 +181,16 @@ export class NovelsListComponent extends Component {
 
             // 绑定点击事件
             itemNode.on(Node.EventType.TOUCH_END, () => {
+                // 埋点：点击 (Tap)
+                trackIndexCardClick(novel.id, novel.title);
                 this.onNovelClick(novel);
             }, this);
         }
+
+        // 渲染完成后立即检查一次初始可见状态
+        this.scheduleOnce(() => {
+            this.checkVisibleItems();
+        }, 0.1);
     }
 
     /**

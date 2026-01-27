@@ -1,11 +1,11 @@
 import { director, Label, Node } from 'cc';
-import { ANALYTICS_HOME_SCENE, ANALYTICS_PAGE_YOU, ANALYTICS_SECTION_MY } from './AnalyticsConfig';
+import { ANALYTICS_GAME_SCENE, ANALYTICS_HISTORY_SCENE, ANALYTICS_HOME_SCENE, ANALYTICS_INDEX_SCENE, ANALYTICS_LOGIN_SCENE, ANALYTICS_MODULE_ACCOUNT, ANALYTICS_NOTIFICATIONS_SCENE, ANALYTICS_OVERVIEW_SCENE, ANALYTICS_PAGE_CONTENT_OVERVIEW, ANALYTICS_PAGE_GAME, ANALYTICS_PAGE_HISTORY, ANALYTICS_PAGE_HOME, ANALYTICS_PAGE_LOGIN, ANALYTICS_PAGE_NOTIFICATION, ANALYTICS_PAGE_SETTING, ANALYTICS_PAGE_YOU, ANALYTICS_SECTION_GAME, ANALYTICS_SECTION_HISTORY, ANALYTICS_SECTION_INDEX, ANALYTICS_SECTION_LOGIN, ANALYTICS_SECTION_MY, ANALYTICS_SECTION_NOTIFICATION, ANALYTICS_SECTION_OVERVIEW, ANALYTICS_SECTION_SETTING, ANALYTICS_SETTINGS_SCENE } from './AnalyticsConfig';
 import { Analytics } from './AnalyticsManager';
 import { AnalyticsParams } from './AnalyticsProvider';
 
 type UiEventPayload = {
     section: string;
-    event: 'ui_view' | 'ui_click';
+    event: 'ui_view' | 'ui_click' | 'biz_event';
     page_id: string;
     module_id?: string;
     element_id?: string;
@@ -15,6 +15,11 @@ type UiEventPayload = {
 };
 
 type HomeClickOptions = {
+    moduleId?: string;
+    params?: AnalyticsParams;
+};
+
+type IndexClickOptions = {
     moduleId?: string;
     params?: AnalyticsParams;
 };
@@ -56,6 +61,42 @@ export function isHomeScene(sceneName?: string) {
     return name === ANALYTICS_HOME_SCENE;
 }
 
+export function isIndexScene(sceneName?: string) {
+    const name = sceneName ?? director.getScene()?.name;
+    // 兼容处理：有些环境下场景名可能带路径或为空，如果是在 NovelsListComponent 里调用的，通常就是首页
+    return name === ANALYTICS_INDEX_SCENE || name === '' || name === undefined;
+}
+
+export function isNotificationsScene(sceneName?: string) {
+    const name = sceneName ?? director.getScene()?.name;
+    return name === ANALYTICS_NOTIFICATIONS_SCENE;
+}
+
+export function isHistoryScene(sceneName?: string) {
+    const name = sceneName ?? director.getScene()?.name;
+    return name === ANALYTICS_HISTORY_SCENE;
+}
+
+export function isLoginScene(sceneName?: string) {
+    const name = sceneName ?? director.getScene()?.name;
+    return name === ANALYTICS_LOGIN_SCENE;
+}
+
+export function isSettingsScene(sceneName?: string) {
+    const name = sceneName ?? director.getScene()?.name;
+    return name === ANALYTICS_SETTINGS_SCENE;
+}
+
+export function isOverviewScene(sceneName?: string) {
+    const name = sceneName ?? director.getScene()?.name;
+    return name === ANALYTICS_OVERVIEW_SCENE;
+}
+
+export function isGameScene(sceneName?: string) {
+    const name = sceneName ?? director.getScene()?.name;
+    return name === ANALYTICS_GAME_SCENE;
+}
+
 export function trackHomeView() {
     if (!isHomeScene()) return;
     trackUiEvent({
@@ -63,6 +104,230 @@ export function trackHomeView() {
         event: 'ui_view',
         page_id: ANALYTICS_PAGE_YOU,
         action: 'screen',
+    });
+}
+
+export function trackIndexView() {
+    if (!isIndexScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_INDEX,
+        event: 'ui_view',
+        page_id: ANALYTICS_PAGE_HOME,
+        action: 'screen',
+    });
+}
+
+export function trackNotificationsView() {
+    if (!isNotificationsScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_NOTIFICATION,
+        event: 'ui_view',
+        page_id: ANALYTICS_PAGE_NOTIFICATION,
+        action: 'screen',
+    });
+}
+
+export function trackHistoryView() {
+    if (!isHistoryScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_HISTORY,
+        event: 'ui_view',
+        page_id: ANALYTICS_PAGE_HISTORY,
+        action: 'screen',
+    });
+}
+
+export function trackHistoryCardClick(novelId: string, novelTitle: string) {
+    if (!isHistoryScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_HISTORY,
+        event: 'ui_click',
+        page_id: ANALYTICS_PAGE_HISTORY,
+        element_id: 'history_card',
+        action: 'tap',
+        params: {
+            content_type: 'game',
+            content_id: novelId,
+            content_name: novelTitle,
+        },
+    });
+}
+
+export function trackLoginView() {
+    if (!isLoginScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_LOGIN,
+        event: 'ui_view',
+        page_id: ANALYTICS_PAGE_LOGIN,
+        action: 'screen',
+    });
+}
+
+export function trackSettingsView() {
+    if (!isSettingsScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_SETTING,
+        event: 'ui_view',
+        page_id: ANALYTICS_PAGE_SETTING,
+        action: 'screen',
+    });
+}
+
+export function trackSettingsClick(elementId: 'profile' | 'privacy_policy' | 'invite_friends' | 'log_out') {
+    if (!isSettingsScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_SETTING,
+        event: 'ui_click',
+        page_id: ANALYTICS_PAGE_SETTING,
+        module_id: ANALYTICS_MODULE_ACCOUNT,
+        element_id: elementId,
+        action: 'tap',
+    });
+}
+
+export function trackSettingsLogout(status: 'logout_success' | 'logout_fail') {
+    if (!isSettingsScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_SETTING,
+        event: 'biz_event',
+        page_id: ANALYTICS_PAGE_SETTING,
+        module_id: ANALYTICS_MODULE_ACCOUNT,
+        element_id: 'log_out',
+        action: 'tap',
+        params: {
+            logout_status: status,
+        },
+    });
+}
+
+export function trackOverviewView(novelId?: string, novelTitle?: string) {
+    if (!isOverviewScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_OVERVIEW,
+        event: 'ui_view',
+        page_id: ANALYTICS_PAGE_CONTENT_OVERVIEW,
+        action: 'screen',
+        params: {
+            content_type: 'game',
+            content_id: novelId,
+            content_name: novelTitle,
+        },
+    });
+}
+
+export function trackOverviewPlayClick(novelId?: string, novelTitle?: string) {
+    if (!isOverviewScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_OVERVIEW,
+        event: 'ui_click',
+        page_id: ANALYTICS_PAGE_CONTENT_OVERVIEW,
+        element_id: 'play',
+        action: 'tap',
+        params: {
+            content_type: 'game',
+            content_id: novelId,
+            content_name: novelTitle,
+        },
+    });
+}
+
+export function trackGameView(novelId?: string, novelTitle?: string) {
+    if (!isGameScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_GAME,
+        event: 'ui_view',
+        page_id: ANALYTICS_PAGE_GAME,
+        action: 'screen',
+        params: {
+            content_id: novelId,
+            content_name: novelTitle,
+        },
+    });
+}
+
+export function trackGameExitClick() {
+    if (!isGameScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_GAME,
+        event: 'ui_click',
+        page_id: ANALYTICS_PAGE_GAME,
+        module_id: 'tools',
+        element_id: 'exit',
+        action: 'tap',
+    });
+}
+
+export function trackGameItemsClick() {
+    if (!isGameScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_GAME,
+        event: 'ui_click',
+        page_id: ANALYTICS_PAGE_GAME,
+        module_id: 'tools',
+        element_id: 'items',
+        action: 'tap',
+    });
+}
+
+export function trackGameNodeFinished(nodeIndex?: number) {
+    if (!isGameScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_GAME,
+        event: 'biz_event',
+        page_id: ANALYTICS_PAGE_GAME,
+        element_id: 'node',
+        action: 'finished',
+        params: {
+            node_index: nodeIndex,
+        },
+    });
+}
+
+export function trackNotificationClick(notificationId: string) {
+    if (!isNotificationsScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_NOTIFICATION,
+        event: 'ui_click',
+        page_id: ANALYTICS_PAGE_NOTIFICATION,
+        element_id: 'notification',
+        action: 'tap',
+        params: {
+            notification_id: notificationId,
+        },
+    });
+}
+
+export function trackIndexCardClick(novelId: string, novelTitle: string) {
+    if (!isIndexScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_INDEX,
+        event: 'ui_click',
+        page_id: ANALYTICS_PAGE_HOME,
+        module_id: 'feed',
+        element_id: 'preview_card',
+        action: 'tap',
+        params: {
+            content_type: 'game',
+            content_id: novelId,
+            content_name: novelTitle,
+        },
+    });
+}
+
+export function trackIndexCardImpression(novelId: string, novelTitle: string) {
+    if (!isIndexScene()) return;
+    trackUiEvent({
+        section: ANALYTICS_SECTION_INDEX,
+        event: 'ui_view',
+        page_id: ANALYTICS_PAGE_HOME,
+        module_id: 'feed',
+        element_id: 'preview_card',
+        action: 'impression',
+        params: {
+            content_type: 'game',
+            content_id: novelId,
+            content_name: novelTitle,
+        },
     });
 }
 
@@ -104,16 +369,28 @@ export function trackHomeRouterClick(targetScene: string, sourceNode?: Node) {
         return;
     }
     if (targetScene === 'histroy') {
-        if (sourceNode && sourceNode.name !== 'btn-view-all') {
-            return;
+        // 仅当点击 "View All" 按钮时触发埋点
+        if (sourceNode && sourceNode.name === 'btn-view-all') {
+            trackHomeClick('history_view_all', {
+                moduleId: 'history',
+                params: {
+                    content_type: 'game',
+                    content_id: sourceNode?.name,
+                    content_name: getLabelText(sourceNode),
+                },
+            });
         }
-        trackHomeClick('history_card', {
-            moduleId: 'history',
-            params: {
-                content_type: 'game',
-                content_id: sourceNode?.name,
-                content_name: getLabelText(sourceNode),
-            },
-        });
     }
+}
+
+export function trackHomeHistoryCardClick(novelId: string, novelTitle: string) {
+    if (!isHomeScene()) return;
+    trackHomeClick('history_card', {
+        moduleId: 'history',
+        params: {
+            content_type: 'game',
+            content_id: novelId,
+            content_name: novelTitle,
+        },
+    });
 }

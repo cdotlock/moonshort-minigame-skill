@@ -186,6 +186,7 @@ export class QuickLoginComponent extends Component {
         return password;
     }
 
+
     /**
      * 处理登录错误
      */

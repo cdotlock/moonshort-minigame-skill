@@ -3,6 +3,7 @@ import { SceneParams } from '../scripts/core/SceneParams';
 import { GameManager } from '../scripts/core/GameManager';
 import { GameAPI } from '../scripts/api/GameAPI';
 import { PlayerSave, GamePhase, EnrichedBCard, ACardPool } from '../scripts/types/game.types';
+import { trackGameItemsClick, trackGameNodeFinished, trackGameView } from '../analytics/UiEvents';
 import { PlayerStatsPanel } from './PlayerStatsPanel';
 import { TransitionDisplayComponent } from './TransitionDisplayComponent';
 import { ACardPanel } from './ACardPanel';
@@ -226,6 +227,8 @@ export class GameSceneController extends Component {
             console.log('[GameSceneController] 加载存档 ID:', saveId);
             const save = await this.gameAPI.getSaveDetail(saveId);
             this.currentSave = save;
+
+            trackGameView(save.novelId, save.novelTitle);
             
             console.log('[GameSceneController] 存档数据加载成功:', {
                 id: save.id,
@@ -418,6 +421,11 @@ export class GameSceneController extends Component {
             console.warn('[GameSceneController] 组件已销毁，放弃 B 卡完成处理');
             return;
         }
+
+        const nodeIndex = typeof result?.nodeIndex === 'number'
+            ? result.nodeIndex
+            : this.currentSave?.currentNodeIndex;
+        trackGameNodeFinished(nodeIndex);
 
         // 更新存档数据
         if (this.currentSave && result.playerUpdates) {
@@ -1002,6 +1010,8 @@ export class GameSceneController extends Component {
             console.error('[GameSceneController] 无法打开装备面板：存档数据不存在');
             return;
         }
+
+        trackGameItemsClick();
         
         if (!this.inventoryContainerNode || !this.inventoryPanel) {
             console.error('[GameSceneController] 装备面板未配置');

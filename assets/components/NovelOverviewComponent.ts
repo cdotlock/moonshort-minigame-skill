@@ -4,6 +4,7 @@ import { GameManager } from '../scripts/core/GameManager';
 import { NovelsAPI } from '../scripts/api/NovelsAPI';
 import { SavesAPI } from '../scripts/api/SavesAPI';
 import { Novel, SaveGame } from '../scripts/types/api.types';
+import { trackOverviewPlayClick, trackOverviewView } from '../analytics/UiEvents';
 import { TagItemComponent } from './TagItemComponent';
 import { SavesListComponent } from './SavesListComponent';
 
@@ -193,6 +194,7 @@ export class NovelOverviewComponent extends Component {
             const novel = await this.novelsAPI.getDetail(this.novelId);
             this.currentNovel = novel;
             this.renderNovelDetail(novel);
+            trackOverviewView(novel.id, novel.title);
             this.showContent();
         } catch (error) {
             console.error('[NovelOverviewComponent] 加载小说详情失败:', error);
@@ -416,6 +418,9 @@ export class NovelOverviewComponent extends Component {
         console.log('[NovelOverviewComponent] 按钮点击：跳转到游戏');
         console.log('[NovelOverviewComponent] novelId:', this.novelId);
         console.log('[NovelOverviewComponent] 当前选中的 saveId:', this.selectedSaveId);
+
+        const title = this.currentNovel?.title || this.titleLabel?.string || undefined;
+        trackOverviewPlayClick(this.novelId, title);
         
         // 如果已经有选中的存档，直接跳转
         if (this.selectedSaveId) {

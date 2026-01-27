@@ -4,6 +4,7 @@ import { Novel } from '../scripts/types/api.types';
 import { NovelsAPI } from '../scripts/api/NovelsAPI';
 import { GameManager } from '../scripts/core/GameManager';
 import { SceneParams } from '../scripts/core/SceneParams';
+import { trackHistoryCardClick } from '../analytics/UiEvents';
 
 const { ccclass, property, menu } = _decorator;
 
@@ -177,6 +178,9 @@ export class HistoryList extends Component {
      */
     private onCardClick(novel: Novel) {
         console.log('[HistoryList] 卡片被点击:', novel.title, 'ID:', novel.id);
+
+        // 埋点
+        trackHistoryCardClick(novel.id, novel.title);
 
         // 设置场景参数
         SceneParams.set({ novelId: novel.id });

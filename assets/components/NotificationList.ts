@@ -3,6 +3,7 @@ import { NotificationCard } from './NotificationCard';
 import { Notification } from '../scripts/types/api.types';
 import { NotificationsAPI } from '../scripts/api/NotificationsAPI';
 import { GameManager } from '../scripts/core/GameManager';
+import { trackNotificationClick } from '../analytics/UiEvents';
 
 const { ccclass, property, menu } = _decorator;
 

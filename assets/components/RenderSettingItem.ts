@@ -1,4 +1,5 @@
 import { _decorator, Component, Node, Sprite, SpriteFrame, Label, director, NodeEventType, Enum, EventTouch } from 'cc';
+import { trackSettingsClick } from '../analytics/UiEvents';
 const { ccclass, property, menu, executeInEditMode } = _decorator;
 
 export enum ClickMode {
@@ -37,6 +38,7 @@ export class RenderSettingItem extends Component {
     clickTarget: Node | null = null;
 
     private _loading: boolean = false;
+    private _title: string = '';
 
     @property
     private _iconSpriteFrame: SpriteFrame | null = null;
@@ -63,6 +65,7 @@ export class RenderSettingItem extends Component {
     render(icon: SpriteFrame | null, title: string, sceneName: string, clickMode?: ClickMode, clickEvents?: Component.EventHandler[]) {
         this.setIcon(icon);
         this.setTitle(title);
+        this._title = title ?? '';
         this.sceneName = sceneName ?? '';
         if (clickMode !== undefined) {
             this.clickMode = clickMode;
@@ -105,6 +108,10 @@ export class RenderSettingItem extends Component {
         if (this._loading) return;
         const name = this.sceneName?.trim();
         const hasEvents = this.clickEvents && this.clickEvents.length > 0;
+        const elementId = this.getSettingsElementId();
+        if (elementId) {
+            trackSettingsClick(elementId);
+        }
 
         switch (this.clickMode) {
             case ClickMode.EventsOnly:
@@ -135,5 +142,14 @@ export class RenderSettingItem extends Component {
         director.loadScene(name, () => {
             this._loading = false;
         });
+    }
+
+    private getSettingsElementId(): 'invite_friends' | null {
+        const title = (this._title || this.titleLabel?.string || '').trim().toLowerCase();
+        if (!title) return null;
+        if (title === 'invite friends' || title === 'invite_friend' || title === 'invite_friends') {
+            return 'invite_friends';
+        }
+        return null;
     }
 }

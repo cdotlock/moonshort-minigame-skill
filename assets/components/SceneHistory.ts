@@ -1,6 +1,6 @@
 import { director, Director, game, Game, Scene } from 'cc';
 import { Analytics } from '../analytics/AnalyticsManager';
-import { trackHomeView } from '../analytics/UiEvents';
+import { trackHistoryView, trackHomeView, trackIndexView, trackLoginView, trackNotificationsView, trackSettingsView } from '../analytics/UiEvents';
 import { SceneParams } from '../scripts/core/SceneParams';
 
 /**
@@ -50,6 +50,11 @@ class SceneHistoryManager {
         const name = typeof scene === 'string' ? scene : scene?.name;
         if (!name) return;
         trackHomeView();
+        trackIndexView();
+        trackNotificationsView();
+        trackHistoryView();
+        trackLoginView();
+        trackSettingsView();
     }
 
     /**

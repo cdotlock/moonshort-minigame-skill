@@ -1,5 +1,6 @@
 import { _decorator, Component, Sprite, Label, Node, Button, SpriteFrame, instantiate, assetManager, ImageAsset, Texture2D } from 'cc';
 import { Novel } from '../scripts/types/api.types';
+import { trackHomeHistoryCardClick } from '../analytics/UiEvents';
 
 const { ccclass, property, menu } = _decorator;
 
@@ -205,6 +206,9 @@ export class HistoryCard extends Component {
         }
 
         console.log('[HistoryCard] 卡片被点击:', this.novelData.title);
+
+        // 触发埋点
+        trackHomeHistoryCardClick(this.novelData.id, this.novelData.title);
 
         // 触发回调
         if (this.clickCallback) {
