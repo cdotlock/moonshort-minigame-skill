@@ -3,7 +3,7 @@
  */
 export const APIConfig = {
     // API 基础 URL
-    BASE_URL: 'http://localhost:3000',
+    BASE_URL: 'http://47.98.225.71',
     
     // API 端点
     ENDPOINTS: {

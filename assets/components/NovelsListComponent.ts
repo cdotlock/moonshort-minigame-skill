@@ -60,7 +60,18 @@ export class NovelsListComponent extends Component {
      * @param page 页码（可选，默认加载下一页）
      */
     async loadNovels(page?: number) {
+        // 检查组件是否有效
+        if (!this.node || !this.node.isValid) {
+            return;
+        }
+
         if (this.isLoading || !this.novelsAPI) {
+            return;
+        }
+
+        // 检查必要配置
+        if (!this.containerNode || !this.itemPrefab) {
+            console.warn('[NovelsListComponent] containerNode 或 itemPrefab 未配置，跳过加载');
             return;
         }
 
@@ -74,6 +85,11 @@ export class NovelsListComponent extends Component {
         try {
             const response = await this.novelsAPI.getList(this.currentPage, this.pageSize);
             
+            // 异步请求后再次检查组件有效性
+            if (!this.node || !this.node.isValid) {
+                return;
+            }
+
             this.novels = response.items;
             this.totalPages = response.pagination.totalPages;
 
@@ -85,9 +101,13 @@ export class NovelsListComponent extends Component {
 
         } catch (error) {
             console.error('[NovelsListComponent] 加载失败:', error);
-            this.showErrorState();
+            if (this.node && this.node.isValid) {
+                this.showErrorState();
+            }
         } finally {
-            this.setLoadingState(false);
+            if (this.node && this.node.isValid) {
+                this.setLoadingState(false);
+            }
         }
     }
 
@@ -95,8 +115,8 @@ export class NovelsListComponent extends Component {
      * 渲染小说列表
      */
     private renderNovels() {
-        if (!this.containerNode || !this.itemPrefab) {
-            console.error('[NovelsListComponent] containerNode 或 itemPrefab 未配置');
+        if (!this.containerNode || !this.containerNode.isValid || !this.itemPrefab) {
+            console.warn('[NovelsListComponent] containerNode 或 itemPrefab 无效，跳过渲染');
             return;
         }
 

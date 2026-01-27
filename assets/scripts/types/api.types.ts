@@ -100,6 +100,9 @@ export interface Novel {
     firstChapterTitle: string | null;
     firstNodeIntroVideo: string | null;
     publishedAt: string;
+    // 扮演角色信息
+    roleplayCharacterName?: string | null;
+    roleplayCharacterAvatar?: string | null;
 }
 
 /**

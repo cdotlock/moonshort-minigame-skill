@@ -1,7 +1,9 @@
-import { _decorator, Component, Label, director, Node, UIOpacity } from 'cc';
+import { _decorator, Component, Label, director, Node, UIOpacity, Sprite, assetManager, ImageAsset, Texture2D, SpriteFrame, Mask, Graphics, Color, UITransform } from 'cc';
 import { SceneParams } from '../scripts/core/SceneParams';
 import { GameManager } from '../scripts/core/GameManager';
 import { SavesAPI } from '../scripts/api/SavesAPI';
+import { NovelsAPI } from '../scripts/api/NovelsAPI';
+import { Novel } from '../scripts/types/api.types';
 
 const { ccclass, property, menu } = _decorator;
 
@@ -30,6 +32,16 @@ export class AddPointComponent extends Component {
 
     @property({ type: Label, tooltip: '剩余点数显示' })
     remainingPointsLabel: Label | null = null;
+
+    // 扮演角色显示
+    @property({ type: Sprite, tooltip: '扮演角色头像（自动添加圆角蒙版）' })
+    roleplayAvatarSprite: Sprite | null = null;
+
+    @property({ type: Label, tooltip: '扮演角色名称' })
+    roleplayNameLabel: Label | null = null;
+
+    @property({ tooltip: '角色名称前缀（如 "Your Character: "）' })
+    roleplayNamePrefix: string = '';
 
     // 增加按钮
     @property({ type: Node, tooltip: '增加战斗力按钮' })
@@ -73,14 +85,17 @@ export class AddPointComponent extends Component {
     private remainingPoints: number = 2;
     private novelId: string = '';
     private savesAPI: SavesAPI | null = null;
+    private novelsAPI: NovelsAPI | null = null;
+    private currentNovel: Novel | null = null;
     
     private increaseButtons: (Node | null)[] = [];
     private decreaseButtons: (Node | null)[] = [];
 
-    onLoad() {
+    async onLoad() {
         // 初始化 API
         const gameManager = GameManager.getInstance();
         this.savesAPI = new SavesAPI(gameManager.getAPI());
+        this.novelsAPI = new NovelsAPI(gameManager.getAPI());
 
         // 获取场景参数
         const params = SceneParams.get<{ novelId?: string }>();
@@ -92,6 +107,12 @@ export class AddPointComponent extends Component {
 
         this.novelId = params.novelId;
         console.log('[AddPointComponent] 接收到 novelId:', this.novelId);
+
+        // 加载小说详情（获取角色信息）
+        await this.loadNovelDetail();
+
+        // 为头像设置圆角蒙版
+        this.setupAvatarMask();
         
         // 初始化按钮数组
         this.increaseButtons = [
@@ -123,6 +144,114 @@ export class AddPointComponent extends Component {
         this.updateDisplay();
     }
 
+    /**
+     * 加载小说详情
+     */
+    private async loadNovelDetail() {
+        if (!this.novelsAPI) {
+            return;
+        }
+
+        try {
+            console.log('[AddPointComponent] 加载小说详情...');
+            const novel = await this.novelsAPI.getDetail(this.novelId);
+            this.currentNovel = novel;
+            console.log('[AddPointComponent] 小说详情:', novel);
+
+            // 设置角色名称（带前缀）
+            if (this.roleplayNameLabel && novel.roleplayCharacterName) {
+                const displayName = this.roleplayNamePrefix 
+                    ? this.roleplayNamePrefix + novel.roleplayCharacterName 
+                    : novel.roleplayCharacterName;
+                this.roleplayNameLabel.string = displayName;
+                console.log('[AddPointComponent] 设置角色名称:', displayName);
+            }
+
+            // 加载角色头像
+            if (novel.roleplayCharacterAvatar) {
+                await this.loadRoleplayAvatar(novel.roleplayCharacterAvatar);
+            }
+        } catch (error) {
+            console.error('[AddPointComponent] 加载小说详情失败:', error);
+        }
+    }
+
+    /**
+     * 加载扮演角色头像
+     */
+    private loadRoleplayAvatar(avatarUrl: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (!this.roleplayAvatarSprite) {
+                resolve();
+                return;
+            }
+
+            console.log('[AddPointComponent] 加载角色头像:', avatarUrl);
+
+            assetManager.loadRemote<ImageAsset>(avatarUrl, (err, imageAsset) => {
+                if (err) {
+                    console.error('[AddPointComponent] 头像加载失败:', err);
+                    reject(err);
+                    return;
+                }
+
+                const spriteFrame = new SpriteFrame();
+                const texture = new Texture2D();
+                texture.image = imageAsset;
+                spriteFrame.texture = texture;
+
+                this.roleplayAvatarSprite!.spriteFrame = spriteFrame;
+                console.log('[AddPointComponent] 头像设置成功');
+                resolve();
+            });
+        });
+    }
+
+    /**
+     * 为头像设置圆角蒙版
+     */
+    private setupAvatarMask() {
+        if (!this.roleplayAvatarSprite) {
+            return;
+        }
+
+        const spriteNode = this.roleplayAvatarSprite.node;
+        const parentNode = spriteNode.parent;
+        
+        if (!parentNode) {
+            return;
+        }
+        
+        // 在父节点上添加 Mask 组件
+        let mask = parentNode.getComponent(Mask);
+        if (!mask) {
+            mask = parentNode.addComponent(Mask);
+        }
+        
+        // 设置 Mask 类型为 Graphics
+        mask.type = Mask.Type.GRAPHICS_STENCIL;
+        
+        // 在父节点上添加 Graphics 组件
+        let graphics = parentNode.getComponent(Graphics);
+        if (!graphics) {
+            graphics = parentNode.addComponent(Graphics);
+        }
+        
+        // 获取父节点尺寸
+        const transform = parentNode.getComponent(UITransform);
+        if (!transform) {
+            return;
+        }
+        
+        // 绘制圆形（以节点中心为圆心）
+        const radius = Math.min(transform.width, transform.height) / 2;
+        graphics.clear();
+        graphics.fillColor = Color.WHITE;
+        graphics.circle(0, 0, radius);
+        graphics.fill();
+        
+        console.log(`[AddPointComponent] 已为头像设置圆角蒙版，半径: ${radius}`);
+    }
 
     /**
      * 为 increase/decrease按钮添加 UIOpacity 组件

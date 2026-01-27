@@ -37,6 +37,10 @@ export class QuickLoginComponent extends Component {
      * 检查登录状态
      */
     private checkLoginStatus() {
+        if (!this.node || !this.node.isValid) {
+            return;
+        }
+
         const gameManager = GameManager.getInstance();
         if (!gameManager) {
             console.error('[QuickLoginComponent] GameManager 未初始化');
@@ -57,6 +61,10 @@ export class QuickLoginComponent extends Component {
      * - Handler: onLoginClick
      */
     async onLoginClick() {
+        if (!this.node || !this.node.isValid) {
+            return;
+        }
+
         if (this.isLoading) {
             return;
         }
@@ -90,14 +98,20 @@ export class QuickLoginComponent extends Component {
 
             // 短暂延迟后跳转
             setTimeout(() => {
-                this.navigateToNextScene();
+                if (this.node && this.node.isValid) {
+                    this.navigateToNextScene();
+                }
             }, 500);
 
         } catch (error) {
             console.error('[QuickLoginComponent] 快速登录失败:', error);
-            this.handleLoginError(error);
+            if (this.node && this.node.isValid) {
+                this.handleLoginError(error);
+            }
         } finally {
-            this.setLoadingState(false);
+            if (this.node && this.node.isValid) {
+                this.setLoadingState(false);
+            }
         }
     }
 
@@ -192,7 +206,7 @@ export class QuickLoginComponent extends Component {
         this.isLoading = loading;
 
         // 显示/隐藏加载提示
-        if (this.loadingNode) {
+        if (this.loadingNode && this.loadingNode.isValid) {
             this.loadingNode.active = loading;
         }
     }
@@ -201,7 +215,7 @@ export class QuickLoginComponent extends Component {
      * 设置提示文本
      */
     private setTip(message: string) {
-        if (this.tipLabel) {
+        if (this.tipLabel && this.tipLabel.isValid && this.tipLabel.node && this.tipLabel.node.isValid) {
             this.tipLabel.string = message;
             this.tipLabel.node.active = message.length > 0;
         }
