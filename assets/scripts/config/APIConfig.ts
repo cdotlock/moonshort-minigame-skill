@@ -1,9 +1,29 @@
 /**
+ * 获取 API 基础 URL
+ * - 生产环境：动态获取当前域名（同域部署，无跨域问题）
+ * - 开发环境：使用 localhost:3000
+ */
+function getBaseUrl(): string {
+    // 在浏览器环境中，判断是否为生产环境
+    if (typeof window !== 'undefined' && window.location) {
+        const { protocol, host } = window.location;
+        // 如果不是 localhost 开发环境，使用当前域名（同域部署）
+        if (!host.includes('localhost')) {
+            return `${protocol}//${host}`;
+        }
+    }
+    // 开发环境默认值
+    return 'http://localhost:3000';
+}
+
+/**
  * API 配置
  */
 export const APIConfig = {
-    // API 基础 URL
-    BASE_URL: 'http://localhost:3000',  // 后端服务地址
+    // API 基础 URL（动态获取）
+    get BASE_URL(): string {
+        return getBaseUrl();
+    },
     
     // API 端点
     ENDPOINTS: {
