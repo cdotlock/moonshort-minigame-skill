@@ -1,5 +1,6 @@
-import { _decorator, Component, Node, director, Button } from 'cc';
+import { _decorator, Component, Node, Button } from 'cc';
 import { SceneParams } from '../scripts/core/SceneParams';
+import { Navigator } from '../scripts/core/Navigator';
 import { InventoryPanel } from './InventoryPanel';
 import { PlayerSave } from '../scripts/types/game.types';
 
@@ -97,14 +98,8 @@ export class EquipmentSceneController extends Component {
             cachedPhase: params.cachedPhase
         });
         
-        // 加载游戏场景
-        director.loadScene('game', (err) => {
-            if (err) {
-                console.error('[EquipmentSceneController] 加载场景失败:', err);
-            } else {
-                console.log('[EquipmentSceneController] 游戏场景加载成功');
-            }
-        });
+        // 返回游戏场景
+        Navigator.toScene('game');
     }
     
     /**

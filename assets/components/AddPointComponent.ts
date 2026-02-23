@@ -1,6 +1,7 @@
-import { _decorator, Component, Node, Label, Button, director, Sprite, SpriteFrame, assetManager, ImageAsset, Texture2D, Mask, Graphics, UITransform, Color, UIOpacity } from 'cc';
+import { _decorator, Component, Node, Label, Button, Sprite, SpriteFrame, assetManager, ImageAsset, Texture2D, Mask, Graphics, UITransform, Color, UIOpacity } from 'cc';
 import { showLoading, hideLoading } from '../scripts/utils/SpriteLoading';
 import { SceneParams } from '../scripts/core/SceneParams';
+import { Navigator } from '../scripts/core/Navigator';
 import { GameManager } from '../scripts/core/GameManager';
 import { SavesAPI } from '../scripts/api/SavesAPI';
 import { NovelsAPI } from '../scripts/api/NovelsAPI';
@@ -480,7 +481,7 @@ export class AddPointComponent extends Component {
             console.log('[AddPointComponent] 跳转到游戏场景');
 
             // 跳转到游戏场景
-            director.loadScene(this.gameSceneName);
+            Navigator.toScene('game');
 
         } catch (error) {
             console.error('[AddPointComponent] 创建存档失败:', error);

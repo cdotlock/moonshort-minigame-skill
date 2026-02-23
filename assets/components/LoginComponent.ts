@@ -1,11 +1,13 @@
-import { _decorator, Component, Node, EditBox, Label, Button, director } from 'cc';
+import { _decorator, Component, Node, EditBox, Label, Button } from 'cc';
 import { GameManager } from '../scripts/core/GameManager';
+import { Navigator } from '../scripts/core/Navigator';
 import { ApiError } from '../scripts/types/api.types';
 
 const { ccclass, property, menu } = _decorator;
 
 /**
- * 登录组件
+ * @deprecated 已迁移到 scripts/wndControl/LoginWndCtrl.ts
+ * 用户名密码登录组件（保留供旧 prefab 引用，新功能请使用 LoginWndCtrl）
  */
 @ccclass('LoginComponent')
 @menu('Components/LoginComponent')
@@ -25,8 +27,8 @@ export class LoginComponent extends Component {
     @property({ type: Node, tooltip: '加载中提示节点' })
     loadingNode: Node | null = null;
 
-    @property({ tooltip: '登录成功后跳转的场景名称' })
-    nextSceneName: string = 'home';
+    @property({ tooltip: '登录成功后跳转的场景' })
+    nextSceneName: string = 'index';
 
     private isLoading: boolean = false;
 
@@ -159,11 +161,7 @@ export class LoginComponent extends Component {
      * 跳转到下一个场景
      */
     private navigateToNextScene() {
-        if (this.nextSceneName) {
-            director.loadScene(this.nextSceneName);
-        } else {
-            console.error('[LoginComponent] 未设置下一个场景名称');
-        }
+        Navigator.toScene(this.nextSceneName as any || 'index');
     }
 
     onDestroy() {

@@ -1,34 +1,40 @@
-import { _decorator, Component, Node, Label, EditBox, Sprite, Color, UIOpacity, tween, Tween, UITransform } from 'cc';
-import { GameManager } from '../scripts/core/GameManager';
-import { Navigator } from '../scripts/core/Navigator';
-import { InviteAPI } from '../scripts/api/InviteAPI';
+import { _decorator, Node, Label, EditBox, Sprite, Color, UIOpacity, tween, Tween, UITransform } from 'cc';
+import { WndBase } from '../core/WndBase';
+import { GameManager } from '../core/GameManager';
+import { Navigator } from '../core/Navigator';
+import { InviteAPI } from '../api/InviteAPI';
 
 const { ccclass, property, menu } = _decorator;
 
 /**
- * @deprecated 已迁移到 scripts/wndControl/InviteCodeWndCtrl.ts
- * 邀请码输入控制组件（保留供旧 prefab 引用，新功能请使用 InviteCodeWndCtrl）
+ * inviteCodeWnd 主控制器
+ * 6 位邀请码输入 + 激活账户
+ *
+ * 替代原 InviteCodeController + ActivateComponent
+ *
+ * UI 结构：
+ * - 透明 EditBox 覆盖格子上方，接收输入 & 弹出键盘
+ * - 6 个 charBoxes（带 Sprite 背景）各含 charLabel
+ * - 动态闪烁光标跟随当前输入位置
  */
-@ccclass('InviteCodeController')
-@menu('Components/InviteCodeController')
-export class InviteCodeController extends Component {
-    @property({ type: EditBox, tooltip: '透明输入框（覆盖在格子上方，代码自动设为不可见）' })
+@ccclass('InviteCodeWndCtrl')
+@menu('WndControl/InviteCodeWndCtrl')
+export class InviteCodeWndCtrl extends WndBase {
+
+    @property({ type: EditBox, tooltip: '透明输入框（覆盖在格子上方）' })
     hiddenInput: EditBox | null = null;
 
-    @property({ type: [Label], tooltip: '6个字符展示 Label（按顺序）' })
+    @property({ type: [Label], tooltip: '6 个字符展示 Label（按顺序）' })
     charLabels: Label[] = [];
 
-    @property({ type: [Node], tooltip: '6个格子背景节点（bg-invite-label 系列，按顺序拖入）' })
+    @property({ type: [Node], tooltip: '6 个格子背景节点（按顺序）' })
     charBoxes: Node[] = [];
 
     @property({ type: Label, tooltip: '错误提示 Label' })
     errorLabel: Label | null = null;
 
-    @property({ type: Node, tooltip: '加载中提示节点（可选）' })
+    @property({ type: Node, tooltip: '加载中节点（可选）' })
     loadingNode: Node | null = null;
-
-    @property({ tooltip: '激活成功后跳转的场景' })
-    successSceneName: string = 'index';
 
     @property({ tooltip: '空字符占位符' })
     placeholderChar: string = '';
@@ -55,14 +61,16 @@ export class InviteCodeController extends Component {
     private cursorNode: Node | null = null;
     private isFocused: boolean = false;
 
-    onLoad() {
+    // ==================== 生命周期 ====================
+
+    protected onWndOpen(params: Record<string, any>): void {
         // 初始化 API
-        const gameManager = GameManager.getInstance();
-        if (gameManager) {
-            this.inviteAPI = new InviteAPI(gameManager.getAPI());
+        const gm = GameManager.getInstance();
+        if (gm) {
+            this.inviteAPI = new InviteAPI(gm.getAPI());
         }
 
-        // 设置输入框监听 & 隐藏
+        // 绑定输入事件 & 隐藏 EditBox
         if (this.hiddenInput) {
             this.hiddenInput.node.on('text-changed', this.onTextChanged, this);
             this.hiddenInput.node.on('editing-did-ended', this.onEditingEnded, this);
@@ -74,23 +82,16 @@ export class InviteCodeController extends Component {
         this.updateCharLabels('');
         this.updateBoxHighlight('');
         this.hideError();
+        if (this.loadingNode) this.loadingNode.active = false;
 
-        if (this.loadingNode) {
-            this.loadingNode.active = false;
-        }
+        // 延迟创建光标
+        this.scheduleOnce(() => this.createCursorNode(), 0);
 
-        // 延迟一帧创建光标（确保节点层级就绪）
-        this.scheduleOnce(() => {
-            this.createCursorNode();
-        }, 0);
-
-        // 1秒后检查激活状态
-        this.scheduleOnce(() => {
-            this.checkActivationStatus();
-        }, 1);
+        // 延迟检查激活状态
+        this.scheduleOnce(() => this.checkActivationStatus(), 1);
     }
 
-    onDestroy() {
+    protected onWndClose(): void {
         if (this.hiddenInput) {
             this.hiddenInput.node.off('text-changed', this.onTextChanged, this);
             this.hiddenInput.node.off('editing-did-ended', this.onEditingEnded, this);
@@ -101,32 +102,24 @@ export class InviteCodeController extends Component {
 
     // ==================== EditBox 隐藏 ====================
 
-    /**
-     * 彻底隐藏 EditBox 渲染，保留触摸交互
-     */
     private makeEditBoxInvisible() {
         if (!this.hiddenInput) return;
         const node = this.hiddenInput.node;
-        let uiOpacity = node.getComponent(UIOpacity);
-        if (!uiOpacity) {
-            uiOpacity = node.addComponent(UIOpacity);
-        }
-        uiOpacity.opacity = 0;
+        let op = node.getComponent(UIOpacity);
+        if (!op) op = node.addComponent(UIOpacity);
+        op.opacity = 0;
     }
 
     // ==================== 光标管理 ====================
 
-    /**
-     * 动态创建闪烁光标节点（用 Label '|' 实现，无需额外图片资源）
-     */
     private createCursorNode() {
         if (this.charBoxes.length === 0) return;
 
         const cursor = new Node('InviteCursor');
         cursor.layer = this.charBoxes[0].layer;
 
-        const uiTransform = cursor.addComponent(UITransform);
-        uiTransform.setContentSize(20, 36);
+        const ut = cursor.addComponent(UITransform);
+        ut.setContentSize(20, 36);
 
         const label = cursor.addComponent(Label);
         label.string = '|';
@@ -139,23 +132,18 @@ export class InviteCodeController extends Component {
         cursor.addComponent(UIOpacity);
         cursor.active = false;
 
-        // 挂到第一个格子下作为初始父节点
         this.charBoxes[0].addChild(cursor);
         this.cursorNode = cursor;
     }
 
-    /**
-     * 将闪烁光标移到指定格子
-     */
     private showCursorAt(index: number) {
         if (!this.cursorNode || index < 0 || index >= this.charBoxes.length) return;
+        const box = this.charBoxes[index];
+        if (!box) return;
 
-        const targetBox = this.charBoxes[index];
-        if (!targetBox) return;
-
-        if (this.cursorNode.parent !== targetBox) {
+        if (this.cursorNode.parent !== box) {
             this.cursorNode.removeFromParent();
-            targetBox.addChild(this.cursorNode);
+            box.addChild(this.cursorNode);
         }
         this.cursorNode.setPosition(0, 0, 0);
         this.cursorNode.active = true;
@@ -164,47 +152,39 @@ export class InviteCodeController extends Component {
 
     private hideCursor() {
         this.stopCursorBlink();
-        if (this.cursorNode) {
-            this.cursorNode.active = false;
-        }
+        if (this.cursorNode) this.cursorNode.active = false;
     }
 
     private startCursorBlink() {
         if (!this.cursorNode) return;
-        const uiOpacity = this.cursorNode.getComponent(UIOpacity);
-        if (!uiOpacity) return;
+        const op = this.cursorNode.getComponent(UIOpacity);
+        if (!op) return;
 
-        Tween.stopAllByTarget(uiOpacity);
-        uiOpacity.opacity = 255;
+        Tween.stopAllByTarget(op);
+        op.opacity = 255;
 
-        tween(uiOpacity)
+        tween(op)
             .repeatForever(
                 tween<UIOpacity>()
                     .delay(0.5)
-                    .call(() => { if (uiOpacity.isValid) uiOpacity.opacity = 0; })
+                    .call(() => { if (op.isValid) op.opacity = 0; })
                     .delay(0.5)
-                    .call(() => { if (uiOpacity.isValid) uiOpacity.opacity = 255; })
+                    .call(() => { if (op.isValid) op.opacity = 255; })
             )
             .start();
     }
 
     private stopCursorBlink() {
         if (!this.cursorNode) return;
-        const uiOpacity = this.cursorNode.getComponent(UIOpacity);
-        if (uiOpacity) {
-            Tween.stopAllByTarget(uiOpacity);
-            uiOpacity.opacity = 255;
+        const op = this.cursorNode.getComponent(UIOpacity);
+        if (op) {
+            Tween.stopAllByTarget(op);
+            op.opacity = 255;
         }
     }
 
     // ==================== 格子高亮 ====================
 
-    /**
-     * 根据输入状态更新 6 个格子背景颜色：
-     * - 已填充 → filledBoxColor
-     * - 当前活跃（光标所在）→ activeBoxColor
-     * - 空 → emptyBoxColor
-     */
     private updateBoxHighlight(code: string) {
         const activeIdx = this.isFocused ? Math.min(code.length, 5) : -1;
 
@@ -224,62 +204,38 @@ export class InviteCodeController extends Component {
 
     // ==================== 输入事件 ====================
 
-    /**
-     * 编辑开始（键盘弹出）
-     */
     private onEditingBegan() {
         this.isFocused = true;
         const code = this.getInviteCode();
         this.updateBoxHighlight(code);
-        if (code.length < 6) {
-            this.showCursorAt(code.length);
-        }
+        if (code.length < 6) this.showCursorAt(code.length);
     }
 
-    /**
-     * 编辑结束（键盘收起）
-     */
     private onEditingEnded() {
         this.isFocused = false;
         this.hideCursor();
         this.updateBoxHighlight(this.getInviteCode());
     }
 
-    /**
-     * 输入内容变化
-     */
     private onTextChanged(editBox: EditBox) {
-        // 只保留字母数字，限制6位
         let value = editBox.string.replace(/[^A-Za-z0-9]/g, '');
-        if (value.length > 6) {
-            value = value.slice(0, 6);
-        }
+        if (value.length > 6) value = value.slice(0, 6);
 
-        // 更新输入框（避免循环触发）
-        if (editBox.string !== value) {
-            editBox.string = value;
-            return;
-        }
+        if (editBox.string !== value) { editBox.string = value; return; }
 
-        // 更新字符展示 & 格子高亮
         this.updateCharLabels(value);
         this.updateBoxHighlight(value);
         this.hideError();
 
-        // 更新光标位置
         if (this.isFocused) {
-            if (value.length < 6) {
-                this.showCursorAt(value.length);
-            } else {
-                this.hideCursor();
-            }
+            if (value.length < 6) this.showCursorAt(value.length);
+            else this.hideCursor();
         }
 
-        // 从5位变6位自动提交
+        // 5→6 自动提交
         if (this.lastLength === 5 && value.length === 6) {
             this.doActivate(value);
         }
-
         this.lastLength = value.length;
     }
 
@@ -287,7 +243,7 @@ export class InviteCodeController extends Component {
 
     private updateCharLabels(code: string) {
         for (let i = 0; i < 6; i++) {
-            if (i < this.charLabels.length && this.charLabels[i] && this.charLabels[i].isValid) {
+            if (i < this.charLabels.length && this.charLabels[i]?.isValid) {
                 this.charLabels[i].string = i < code.length ? code[i] : this.placeholderChar;
             }
         }
@@ -299,49 +255,31 @@ export class InviteCodeController extends Component {
         return this.hiddenInput?.string?.trim() || '';
     }
 
-    /**
-     * 手动触发激活（供 Button Click Events 调用）
-     */
+    /** 手动提交（供按钮 Click Events 调用） */
     handleDone() {
         if (this.isLoading) return;
-
         const code = this.getInviteCode();
-        if (code.length !== 6) {
-            this.showError('Please enter 6 characters.');
-            return;
-        }
-
+        if (code.length !== 6) { this.showError('Please enter 6 characters.'); return; }
         this.doActivate(code);
     }
 
-    /**
-     * 检查激活状态，已激活则跳转首页
-     */
     private async checkActivationStatus() {
-        if (!this.node || !this.node.isValid || this.isRedirecting) return;
-
-        const gameManager = GameManager.getInstance();
-        if (!gameManager) return;
+        if (!this.node?.isValid || this.isRedirecting) return;
+        const gm = GameManager.getInstance();
+        if (!gm) return;
 
         try {
-            const api = gameManager.getAPI();
-            const response = await api.get('/apiv2/auth/me');
+            const me = await gm.getAPI().get('/apiv2/auth/me');
+            if (!this.node?.isValid || this.isRedirecting) return;
 
-            if (!this.node || !this.node.isValid || this.isRedirecting) return;
-
-            if (response.isActivated) {
-                console.log('[InviteCodeController] 账户已激活，跳转首页');
+            if (me.isActivated) {
+                console.log('[InviteCodeWndCtrl] 已激活，跳转 index');
                 this.isRedirecting = true;
                 Navigator.toScene('index');
             }
-        } catch (e) {
-            // 忽略检查失败
-        }
+        } catch (_) { /* ignore */ }
     }
 
-    /**
-     * 执行激活请求
-     */
     private async doActivate(inviteCode: string) {
         if (this.isLoading || !this.inviteAPI) return;
 
@@ -351,75 +289,56 @@ export class InviteCodeController extends Component {
 
         try {
             const result = await this.inviteAPI.activateAccount(inviteCode);
+            if (!this.node?.isValid) return;
 
-            if (!this.node || !this.node.isValid) return;
+            console.log('[InviteCodeWndCtrl] 激活成功:', result.message);
 
-            console.log('[InviteCodeController] 激活成功:', result.message);
-
-            const gameManager = GameManager.getInstance();
-            if (gameManager) {
-                try {
-                    await gameManager.getAuth().refreshUserInfo();
-                } catch (e) {
-                    // 忽略刷新失败
-                }
+            // 刷新用户信息
+            const gm = GameManager.getInstance();
+            if (gm) {
+                try { await gm.getAuth().refreshUserInfo(); } catch (_) { /* ignore */ }
             }
 
             this.isRedirecting = true;
             this.scheduleOnce(() => {
-                if (this.node && this.node.isValid) {
-                    Navigator.toScene('index');
-                }
+                if (this.node?.isValid) Navigator.toScene('index');
             }, 0.5);
-
         } catch (error: any) {
-            if (!this.node || !this.node.isValid || this.isRedirecting) return;
+            if (!this.node?.isValid || this.isRedirecting) return;
 
             if (error.message?.includes('已激活')) {
-                console.log('[InviteCodeController] 账户已激活，跳转首页');
                 this.isRedirecting = true;
                 Navigator.toScene('index');
                 return;
             }
-
-            console.error('[InviteCodeController] 激活失败:', error.message);
+            console.error('[InviteCodeWndCtrl] 激活失败:', error.message);
             this.showError(this.errorMessage);
         } finally {
             this.isLoading = false;
-            if (this.node && this.node.isValid) {
-                this.setLoading(false);
-            }
+            if (this.node?.isValid) this.setLoading(false);
         }
     }
 
-    // ==================== UI 工具方法 ====================
+    // ==================== UI 工具 ====================
 
-    private showError(message: string) {
-        if (this.errorLabel && this.errorLabel.isValid) {
-            this.errorLabel.string = message;
+    private showError(msg: string) {
+        if (this.errorLabel?.isValid) {
+            this.errorLabel.string = msg;
             this.errorLabel.node.active = true;
         }
     }
 
     private hideError() {
-        if (this.errorLabel && this.errorLabel.isValid) {
-            this.errorLabel.node.active = false;
-        }
+        if (this.errorLabel?.isValid) this.errorLabel.node.active = false;
     }
 
-    private setLoading(loading: boolean) {
-        if (this.loadingNode && this.loadingNode.isValid) {
-            this.loadingNode.active = loading;
-        }
-        if (this.hiddenInput && this.hiddenInput.isValid) {
-            this.hiddenInput.enabled = !loading;
-        }
+    private setLoading(on: boolean) {
+        if (this.loadingNode?.isValid) this.loadingNode.active = on;
+        if (this.hiddenInput?.isValid) this.hiddenInput.enabled = !on;
     }
 
     clearInput() {
-        if (this.hiddenInput) {
-            this.hiddenInput.string = '';
-        }
+        if (this.hiddenInput) this.hiddenInput.string = '';
         this.lastLength = 0;
         this.updateCharLabels('');
         this.updateBoxHighlight('');
@@ -428,8 +347,6 @@ export class InviteCodeController extends Component {
     }
 
     focusInput() {
-        if (this.hiddenInput && this.hiddenInput.isValid) {
-            this.hiddenInput.focus();
-        }
+        if (this.hiddenInput?.isValid) this.hiddenInput.focus();
     }
 }

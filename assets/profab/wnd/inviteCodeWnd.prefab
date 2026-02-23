@@ -408,11 +408,40 @@
       null,
       null
     ],
+    "charBoxes": [],
     "errorLabel": null,
     "loadingNode": null,
     "successSceneName": "index",
     "placeholderChar": "",
     "errorMessage": "Invite code error, please try again.",
+    "activeBoxColor": {
+      "__type__": "cc.Color",
+      "r": 100,
+      "g": 180,
+      "b": 255,
+      "a": 255
+    },
+    "filledBoxColor": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "emptyBoxColor": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 100
+    },
+    "cursorColor": {
+      "__type__": "cc.Color",
+      "r": 100,
+      "g": 180,
+      "b": 255,
+      "a": 255
+    },
     "_id": ""
   },
   {
@@ -3817,7 +3846,7 @@
       "__id__": 164
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 172
@@ -3872,8 +3901,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 0,
-      "height": 50.4
+      "width": 558,
+      "height": 120
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",

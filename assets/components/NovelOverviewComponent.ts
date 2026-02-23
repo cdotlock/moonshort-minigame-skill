@@ -1,6 +1,7 @@
-import { _decorator, Component, Node, Label, Sprite, Prefab, instantiate, assetManager, ImageAsset, SpriteFrame, Texture2D, director, Button } from 'cc';
+import { _decorator, Component, Node, Label, Sprite, Prefab, instantiate, assetManager, ImageAsset, SpriteFrame, Texture2D, Button } from 'cc';
 import { showLoading, hideLoading } from '../scripts/utils/SpriteLoading';
 import { SceneParams } from '../scripts/core/SceneParams';
+import { Navigator } from '../scripts/core/Navigator';
 import { GameManager } from '../scripts/core/GameManager';
 import { NovelsAPI } from '../scripts/api/NovelsAPI';
 import { SavesAPI } from '../scripts/api/SavesAPI';
@@ -114,7 +115,7 @@ export class NovelOverviewComponent extends Component {
         console.log('[NovelOverviewComponent] SceneParams 已设置:', { saveId: parseInt(saveId), novelId: this.novelId });
         
         // 跳转场景
-        director.loadScene('game');
+        Navigator.toScene('game');
     }
     
     /**
@@ -128,8 +129,8 @@ export class NovelOverviewComponent extends Component {
         
         console.log('[NovelOverviewComponent] SceneParams 已设置:', { novelId: this.novelId });
         
-        // 跳转场景
-        director.loadScene(this.addPointSceneName);
+        // 打开属性分配窗口
+        Navigator.toWnd('addPointWnd', { novelId: this.novelId });
     }
 
     /**

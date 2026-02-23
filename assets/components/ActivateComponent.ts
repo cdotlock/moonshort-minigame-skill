@@ -1,18 +1,13 @@
-import { _decorator, Component, Node, Label, director, EditBox } from 'cc';
+import { _decorator, Component, Node, Label, EditBox } from 'cc';
 import { GameManager } from '../scripts/core/GameManager';
+import { Navigator } from '../scripts/core/Navigator';
 import { InviteAPI } from '../scripts/api/InviteAPI';
 
 const { ccclass, property, menu } = _decorator;
 
 /**
- * 账户激活组件
- * 用于输入6位邀请码激活账户
- * 
- * 流程：
- * 1. 检查登录状态，未登录则跳转到登录页
- * 2. 检查激活状态，已激活则跳转到主页
- * 3. 显示6位邀请码输入界面
- * 4. 用户输入邀请码 -> 调用激活 API -> 跳转主页
+ * @deprecated 已迁移到 scripts/wndControl/InviteCodeWndCtrl.ts
+ * 账户激活组件（保留供旧 prefab 引用，新功能请使用 InviteCodeWndCtrl）
  */
 @ccclass('ActivateComponent')
 @menu('Components/ActivateComponent')
@@ -77,7 +72,7 @@ export class ActivateComponent extends Component {
         // 检查是否已登录
         if (!gameManager.isLoggedIn()) {
             console.log('[ActivateComponent] 未登录，跳转到登录页');
-            director.loadScene(this.loginSceneName);
+            Navigator.toScene('login');
             return;
         }
 
@@ -86,7 +81,7 @@ export class ActivateComponent extends Component {
             const userInfo = gameManager.getAuth().getUserInfo();
             if (userInfo?.isActivated) {
                 console.log('[ActivateComponent] 已激活，跳转到主页');
-                director.loadScene(this.nextSceneName);
+                Navigator.toScene('index');
             }
         } catch (error) {
             console.error('[ActivateComponent] 获取用户信息失败:', error);
@@ -168,7 +163,7 @@ export class ActivateComponent extends Component {
             // 跳转到主页
             setTimeout(() => {
                 if (this.node && this.node.isValid) {
-                    director.loadScene(this.nextSceneName);
+                    Navigator.toScene('index');
                 }
             }, 500);
 

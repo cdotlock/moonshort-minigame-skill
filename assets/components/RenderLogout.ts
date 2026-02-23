@@ -1,5 +1,6 @@
-import { _decorator, Component, director } from 'cc';
+import { _decorator, Component } from 'cc';
 import { GameManager } from '../scripts/core/GameManager';
+import { Navigator } from '../scripts/core/Navigator';
 import { APIConfig } from '../scripts/config/APIConfig';
 
 const { ccclass, menu } = _decorator;
@@ -46,6 +47,6 @@ export class RenderLogout extends Component {
         console.log('[RenderLogout] 登出完成');
 
         // 3. 跳转到登录场景
-        director.loadScene('login');
+        Navigator.toScene('login');
     }
 }

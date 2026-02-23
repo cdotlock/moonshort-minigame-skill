@@ -1,7 +1,8 @@
-import { _decorator, Component, Node, Prefab, instantiate, Label, Button, director } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Label, Button } from 'cc';
 import { GameManager } from '../scripts/core/GameManager';
 import { DataStore } from '../scripts/core/DataStore';
 import { SaveGame } from '../scripts/types/api.types';
+import { Navigator } from '../scripts/core/Navigator';
 import { SceneParams } from '../scripts/core/SceneParams';
 
 const { ccclass, property, menu } = _decorator;
@@ -211,11 +212,8 @@ export class SavesListComponent extends Component {
     private navigateToGame(saveId: string) {
         console.log('[SavesListComponent] 跳转到游戏场景, saveId:', saveId);
         
-        // 设置场景参数
-        SceneParams.set({ saveId: parseInt(saveId) });
-        
-        // 跳转场景
-        director.loadScene(this.gameSceneName);
+        // 跳转到游戏场景
+        Navigator.toScene('game', { saveId: parseInt(saveId) });
     }
 
     /**

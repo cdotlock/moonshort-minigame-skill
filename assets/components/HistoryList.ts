@@ -1,9 +1,9 @@
-import { _decorator, Component, Node, instantiate, ScrollView, Layout, director } from 'cc';
+import { _decorator, Component, Node, instantiate, ScrollView, Layout } from 'cc';
 import { HistoryCard } from './HistoryCard';
 import { Novel, PaginatedResponse } from '../scripts/types/api.types';
 import { DataStore } from '../scripts/core/DataStore';
 import { GameManager } from '../scripts/core/GameManager';
-import { SceneParams } from '../scripts/core/SceneParams';
+import { Navigator } from '../scripts/core/Navigator';
 import { trackHistoryCardClick } from '../analytics/UiEvents';
 
 const { ccclass, property, menu } = _decorator;
@@ -216,11 +216,8 @@ export class HistoryList extends Component {
         // 埋点
         trackHistoryCardClick(novel.id, novel.title);
 
-        // 设置场景参数
-        SceneParams.set({ novelId: novel.id });
-
-        // 跳转到游戏场景
-        director.loadScene(this.gameSceneName);
+        // 打开小说详情窗口
+        Navigator.toWnd('overviewWnd', { novelId: novel.id });
     }
 
     /**

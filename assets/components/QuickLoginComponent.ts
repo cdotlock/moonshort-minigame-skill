@@ -1,17 +1,14 @@
-import { _decorator, Component, Node, Label, director, sys } from 'cc';
+import { _decorator, Component, Node, Label, sys } from 'cc';
 import { GameManager } from '../scripts/core/GameManager';
+import { Navigator } from '../scripts/core/Navigator';
 import { ApiError } from '../scripts/types/api.types';
 import { APIConfig } from '../scripts/config/APIConfig';
 
 const { ccclass, property, menu } = _decorator;
 
 /**
- * 快速登录组件
- * 支持两种登录方式：
- * 1. 快速登录 - 自动创建临时账号（未激活）
- * 2. Google 登录 - 使用 Google 账号登录/注册（自动激活）
- * 
- * 已登录用户可通过 bindToCurrentUser=true 绑定 Google 账号
+ * @deprecated 已迁移到 scripts/wndControl/LoginWndCtrl.ts
+ * 快速登录组件（保留供旧 prefab 引用，新功能请使用 LoginWndCtrl）
  */
 @ccclass('QuickLoginComponent')
 @menu('Components/QuickLoginComponent')
@@ -98,10 +95,9 @@ export class QuickLoginComponent extends Component {
                     inviteCode: user.inviteCode,
                 });
 
-                // 跳转场景
-                const targetScene = user.isActivated ? this.activatedSceneName : this.inviteSceneName;
-                console.log('[QuickLogin] 跳转到:', targetScene);
-                director.loadScene(targetScene);
+                // 跳转场景（统一跳 index，未激活由 AuthGuard 处理）
+                console.log('[QuickLogin] 跳转到 index');
+                Navigator.toScene('index');
             } else {
                 console.warn('[QuickLogin] OAuth Token 换取失败:', result?.error);
             }
@@ -123,14 +119,9 @@ export class QuickLoginComponent extends Component {
         }
 
         if (gameManager.isLoggedIn()) {
-            const userInfo = gameManager.getAuth().getUserInfo();
-            if (userInfo?.isActivated) {
-                console.log('[QuickLoginComponent] 已激活，跳转到 index');
-                director.loadScene(this.activatedSceneName);
-            } else {
-                console.log('[QuickLoginComponent] 未激活，跳转到 invite');
-                director.loadScene(this.inviteSceneName);
-            }
+            // 统一跳 index，未激活由 AuthGuard 处理
+            console.log('[QuickLoginComponent] 已登录，跳转到 index');
+            Navigator.toScene('index');
         }
     }
 
@@ -164,14 +155,12 @@ export class QuickLoginComponent extends Component {
             console.log('[QuickLoginComponent] 登录成功');
             this.setTip('登录成功！');
 
-            // 根据激活状态跳转
-            const userInfo = gameManager.getAuth().getUserInfo();
-            const targetScene = userInfo?.isActivated ? this.activatedSceneName : this.inviteSceneName;
-            console.log('[QuickLoginComponent] 跳转到:', targetScene);
+            // 统一跳 index，未激活由 AuthGuard 处理
+            console.log('[QuickLoginComponent] 跳转到 index');
 
             setTimeout(() => {
                 if (this.node && this.node.isValid) {
-                    director.loadScene(targetScene);
+                    Navigator.toScene('index');
                 }
             }, 500);
 

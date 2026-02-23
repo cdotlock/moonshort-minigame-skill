@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, assetManager, ImageAsset, SpriteFrame, Texture2D, director, Sprite, Size, Rect, AudioSource } from 'cc';
 import { SceneParams } from '../scripts/core/SceneParams';
+import { Navigator } from '../scripts/core/Navigator';
 import { GameManager } from '../scripts/core/GameManager';
 import { GameAPI } from '../scripts/api/GameAPI';
 import { PlayerSave, GamePhase, EnrichedBCard, ACardPool } from '../scripts/types/game.types';
@@ -698,7 +699,7 @@ export class GameSceneController extends Component {
      */
     private returnToHome() {
         console.log('[GameSceneController] 返回首页');
-        director.loadScene('index');
+        Navigator.toScene('index');
     }
 
     /**

@@ -1,4 +1,5 @@
-import { _decorator, Component, Node, Sprite, SpriteFrame, Label, director, NodeEventType, Enum, EventTouch } from 'cc';
+import { _decorator, Component, Node, Sprite, SpriteFrame, Label, NodeEventType, Enum, EventTouch } from 'cc';
+import { Navigator } from '../scripts/core/Navigator';
 import { trackSettingsClick } from '../analytics/UiEvents';
 const { ccclass, property, menu, executeInEditMode } = _decorator;
 
@@ -139,7 +140,7 @@ export class RenderSettingItem extends Component {
 
     private loadScene(name: string) {
         this._loading = true;
-        director.loadScene(name, () => {
+        Navigator.toWnd(name).then(() => {
             this._loading = false;
         });
     }
