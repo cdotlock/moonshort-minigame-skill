@@ -32,10 +32,13 @@
       },
       {
         "__id__": 149
+      },
+      {
+        "__id__": 151
       }
     ],
     "_prefab": {
-      "__id__": 151
+      "__id__": 153
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -3451,6 +3454,55 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "behyRs4gZHfrb+kwJBRybT"
+  },
+  {
+    "__type__": "b1398R+RpNGd6c/jv1ONbqa",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 152
+    },
+    "attrItemTemplate": {
+      "__id__": 57
+    },
+    "remainingPointsNode": {
+      "__id__": 108
+    },
+    "btnStart": {
+      "__id__": 120
+    },
+    "btnStartDisable": {
+      "__id__": 131
+    },
+    "attrNames": [
+      "Attack",
+      "Intelligence",
+      "Charisma",
+      "Willpower"
+    ],
+    "attrInitialValues": [
+      10,
+      10,
+      10,
+      10
+    ],
+    "initialRemainingPoints": 5,
+    "roleplayAvatarSprite": {
+      "__id__": 27
+    },
+    "roleplayNameLabel": null,
+    "roleplayNamePrefix": "",
+    "gameSceneName": "game",
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "30VYY/Vk1OdYM0+pQmBqCH"
   },
   {
     "__type__": "cc.PrefabInfo",

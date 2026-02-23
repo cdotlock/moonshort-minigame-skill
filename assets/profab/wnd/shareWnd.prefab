@@ -28,14 +28,14 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 93
+        "__id__": 95
       },
       {
-        "__id__": 95
+        "__id__": 97
       }
     ],
     "_prefab": {
-      "__id__": 97
+      "__id__": 99
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -137,7 +137,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 720,
-      "height": 1558.0000000000002
+      "height": 1558
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -285,10 +285,13 @@
       },
       {
         "__id__": 90
+      },
+      {
+        "__id__": 92
       }
     ],
     "_prefab": {
-      "__id__": 92
+      "__id__": 94
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -359,7 +362,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": -291.5000000000001,
+      "y": -291.5,
       "z": 0
     },
     "_lrot": {
@@ -577,6 +580,8 @@
       "__id__": 0
     },
     "fileId": "632l91+odGq4L/9xhQnsid",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {
@@ -718,6 +723,8 @@
       "__id__": 0
     },
     "fileId": "8dhcdJuZtCO5grBXQKwjG8",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {
@@ -925,6 +932,8 @@
       "__id__": 0
     },
     "fileId": "7cFFDW9pdHVr5DhH6tm89l",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {
@@ -1142,6 +1151,8 @@
       "__id__": 0
     },
     "fileId": "00LoOkhuRPXqOZLxJyL8D4",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {
@@ -1299,6 +1310,8 @@
       "__id__": 0
     },
     "fileId": "80w+Xkwr9DVJZvruolX9HC",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {
@@ -1456,6 +1469,8 @@
       "__id__": 0
     },
     "fileId": "07OhgMXqdNVaaS4xat3edP",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {
@@ -1742,6 +1757,8 @@
       "__id__": 0
     },
     "fileId": "ce27o0eEFNA7U12TqS5CjR",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {
@@ -1949,6 +1966,8 @@
       "__id__": 0
     },
     "fileId": "c4IQlfBzNGhKdGNiO0zPJa",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {
@@ -2043,7 +2062,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 720,
-      "height": 1558.0000000000002
+      "height": 1558
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -2115,6 +2134,35 @@
     "fileId": "b6DMx12lFB+ZBctl97nYyb"
   },
   {
+    "__type__": "cc.Animation",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 12
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 93
+    },
+    "playOnLoad": true,
+    "_clips": [
+      {
+        "__uuid__": "38f5cf3f-cf4d-4e3e-a787-e4ad99042780",
+        "__expectedType__": "cc.AnimationClip"
+      }
+    ],
+    "_defaultClip": {
+      "__uuid__": "38f5cf3f-cf4d-4e3e-a787-e4ad99042780",
+      "__expectedType__": "cc.AnimationClip"
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "a3rAUhe5dABIELsEuIbzWu"
+  },
+  {
     "__type__": "cc.PrefabInfo",
     "root": {
       "__id__": 1
@@ -2123,6 +2171,8 @@
       "__id__": 0
     },
     "fileId": "8bdzWaUp1Ml7pFALWwMawl",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {
@@ -2135,12 +2185,12 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 94
+      "__id__": 96
     },
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 720,
-      "height": 1558.0000000000002
+      "height": 1558
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -2163,7 +2213,7 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 96
+      "__id__": 98
     },
     "_alignFlags": 45,
     "_target": null,
