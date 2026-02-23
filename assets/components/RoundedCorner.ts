@@ -1,7 +1,7 @@
-import { _decorator, assetManager, CCInteger, director, Director, Enum, NodeEventType, SpriteAtlas, SpriteFrame, UITransform, UIRenderer, Vec2 } from 'cc';
-import { EDITOR, JSB } from 'cc/env';
+import { _decorator, CCInteger, director, Director, Enum, NodeEventType, SpriteFrame, UITransform, UIRenderer } from 'cc';
+import { JSB } from 'cc/env';
 
-const { ccclass, property, executeInEditMode, menu } = _decorator;
+const { ccclass, property, menu } = _decorator;
 
 enum SizeMode { CUSTOM, TRIMMED, RAW }
 
@@ -19,12 +19,8 @@ class Corner {
 }
 
 @ccclass('RoundedCorner')
-@executeInEditMode(true)
 @menu('Components/RoundedCorner')
 export class RoundedCorner extends UIRenderer {
-    @property({ displayName: '图集', type: SpriteAtlas, readonly: true, editorOnly: true, serializable: false })
-    private atlas: SpriteAtlas = null;
-
     @property
     private _spriteFrame: SpriteFrame = null;
     @property({ displayName: '纹理/图集帧', type: SpriteFrame })
@@ -44,9 +40,6 @@ export class RoundedCorner extends UIRenderer {
         this._sizeMode = val;
         this.updateSizeMode();
     }
-
-    @property({ displayName: '顶点数 / 三角形数', readonly: true, editorOnly: true, serializable: false })
-    private vertexTriangle: Vec2 = new Vec2(0, 0);
 
     @property
     private _segment: number = 5;
@@ -141,16 +134,9 @@ export class RoundedCorner extends UIRenderer {
 
     private updateSpriteFrame(): void {
         let spriteFrame = this._spriteFrame;
-        if (!spriteFrame) { this.atlas = null; return; }
+        if (!spriteFrame) return;
         this._renderData && (this._renderData.textureDirty = true);
         this.updateSizeMode();
-        if (EDITOR) {
-            if (!(spriteFrame as any)['_atlasUuid']) { this.atlas = null; return; }
-            assetManager.loadAny((spriteFrame as any)['_atlasUuid'], (err: Error, asset: SpriteAtlas) => {
-                if (err) { this.atlas = null; return; }
-                this.atlas = asset;
-            });
-        }
     }
 
     private updateCorner(): void {
@@ -166,7 +152,6 @@ export class RoundedCorner extends UIRenderer {
         vertexTriangle = [12 + (this._segment - 1) * cornerCnt, 6 + this._segment * cornerCnt];
         renderData.dataLength = vertexTriangle[0];
         renderData.resize(vertexTriangle[0], 3 * vertexTriangle[1]);
-        EDITOR && ([this.vertexTriangle.x, this.vertexTriangle.y] = vertexTriangle);
         this.updateIndices();
     }
 

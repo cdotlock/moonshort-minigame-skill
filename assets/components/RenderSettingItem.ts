@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Sprite, SpriteFrame, Label, NodeEventType, Enum, EventTouch } from 'cc';
 import { Navigator } from '../scripts/core/Navigator';
 import { trackSettingsClick } from '../analytics/UiEvents';
-const { ccclass, property, menu, executeInEditMode } = _decorator;
+const { ccclass, property, menu } = _decorator;
 
 export enum ClickMode {
     Auto = 0,           // 有事件就触发事件，否则跳场景
@@ -12,7 +12,6 @@ export enum ClickMode {
 
 @ccclass('RenderSettingItem')
 @menu('Components/RenderSettingItem')
-@executeInEditMode(true)
 export class RenderSettingItem extends Component {
     @property({ type: Node, tooltip: 'Icon 节点（带 Sprite）' })
     iconNode: Node | null = null;

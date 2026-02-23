@@ -1,11 +1,9 @@
-import { _decorator, Component, Label, Sprite, SpriteFrame, UITransform, CCFloat, CCInteger } from 'cc';
-import { EDITOR } from 'cc/env';
+import { _decorator, Component, Label, Sprite, SpriteFrame, UITransform, CCFloat } from 'cc';
 
-const { ccclass, property, menu, executeInEditMode, requireComponent } = _decorator;
+const { ccclass, property, menu, requireComponent } = _decorator;
 
 @ccclass('AdaptiveCardBackground')
 @menu('UI/AdaptiveCardBackground')
-@executeInEditMode(true)
 @requireComponent(Sprite)
 export class AdaptiveCardBackground extends Component {
     @property({ type: Label, tooltip: '目标Label（留空则自动获取同节点Label）' })
@@ -34,18 +32,6 @@ export class AdaptiveCardBackground extends Component {
         this._heights = value;
         this.updateBackground();
     }
-
-    @property({ type: CCInteger, tooltip: '编辑器手动指定行数（0=自动计算）' })
-    get forceLineCount(): number {
-        return this._forceLineCount;
-    }
-    set forceLineCount(value: number) {
-        this._forceLineCount = value;
-        this.updateBackground();
-    }
-
-    @property
-    private _forceLineCount: number = 0;
 
     @property
     private _targetLabel: Label | null = null;
@@ -83,10 +69,7 @@ export class AdaptiveCardBackground extends Component {
         const label = this._targetLabel || this.node.getComponentInChildren(Label);
         if (!label || !this._sprite || !this._transform) return;
 
-        // 编辑器模式下支持手动指定行数
-        const lineCount = (EDITOR && this._forceLineCount > 0) 
-            ? this._forceLineCount 
-            : this.getLineCount(label);
+        const lineCount = this.getLineCount(label);
         const index = Math.min(lineCount - 1, 2); // 最多3行，索引0-2
 
         // 设置背景图
@@ -105,11 +88,7 @@ export class AdaptiveCardBackground extends Component {
      */
     private getLineCount(label: Label): number {
         // 强制更新渲染数据
-        try {
-            label.updateRenderData(true);
-        } catch (e) {
-            // 编辑器模式可能抛错，忽略
-        }
+        label.updateRenderData(true);
 
         // 方法1: 尝试使用私有属性
         const linesWidth = (label as any)._linesWidth;
@@ -140,13 +119,9 @@ export class AdaptiveCardBackground extends Component {
         label.string = text;
 
         // 延迟一帧确保Label排版完成
-        if (EDITOR) {
+        this.scheduleOnce(() => {
             this.updateBackground();
-        } else {
-            this.scheduleOnce(() => {
-                this.updateBackground();
-            }, 0);
-        }
+        }, 0);
     }
 
     /**

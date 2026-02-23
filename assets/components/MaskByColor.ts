@@ -1,11 +1,9 @@
 import { _decorator, Component, Sprite, SpriteFrame, CCFloat, Material } from 'cc';
-import { EDITOR } from 'cc/env';
 
-const { ccclass, property, menu, executeInEditMode } = _decorator;
+const { ccclass, property, menu } = _decorator;
 
 @ccclass('MaskByColor')
 @menu('UI/MaskByColor')
-@executeInEditMode(true)
 export class MaskByColor extends Component {
     @property({ type: SpriteFrame, tooltip: '黑色蒙版图（黑色区域将显示底图）' })
     get maskFrame(): SpriteFrame | null {
@@ -43,14 +41,7 @@ export class MaskByColor extends Component {
         const sprite = this.getComponent(Sprite);
         if (!sprite || !sprite.customMaterial) return;
 
-        // 编辑器模式下需要获取共享材质实例
-        let material: Material | null = null;
-        if (EDITOR) {
-            material = sprite.customMaterial;
-        } else {
-            material = sprite.getMaterialInstance(0);
-        }
-        
+        const material = sprite.getMaterialInstance(0);
         if (!material) return;
         
         if (this._maskFrame && this._maskFrame.texture) {

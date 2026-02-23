@@ -1,10 +1,9 @@
 import { _decorator, Component, UIRenderer, Sprite, Label, Color, CCInteger, clamp, director, Director } from 'cc';
 
-const { ccclass, property, menu, executeInEditMode, requireComponent } = _decorator;
+const { ccclass, property, menu, requireComponent } = _decorator;
 
 @ccclass('SolidToTransparent')
 @menu('Components/SolidToTransparent')
-@executeInEditMode(true)
 @requireComponent(UIRenderer)
 export class SolidToTransparent extends Component {
     private _renderer: UIRenderer | null = null;

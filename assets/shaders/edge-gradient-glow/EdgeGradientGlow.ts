@@ -1,17 +1,13 @@
 import { _decorator, Component, Sprite, Color, Material, Vec4, UITransform, NodeEventType, assetManager } from 'cc';
-import { EDITOR } from 'cc/env';
 
-const { ccclass, property, menu, executeInEditMode, requireComponent } = _decorator;
+const { ccclass, property, menu, requireComponent } = _decorator;
 
 const DEFAULT_MATERIAL_UUID = 'ee97ff99-60d5-4564-84c2-c5880de022fd';
 
 @ccclass('EdgeGradientGlow')
 @menu('Shaders/EdgeGradientGlow')
-@executeInEditMode(true)
 @requireComponent(Sprite)
 export class EdgeGradientGlow extends Component {
-    private _lastWidth: number = 0;
-    private _lastHeight: number = 0;
     private _materialInstance: Material | null = null;
 
     @property({ type: Material, tooltip: '自定义材质（留空则使用默认材质）' })
@@ -48,17 +44,6 @@ export class EdgeGradientGlow extends Component {
         this.node.off(NodeEventType.SIZE_CHANGED, this.updateMaterial, this);
     }
 
-    update() {
-        if (EDITOR) {
-            const transform = this.getComponent(UITransform);
-            if (transform && (transform.width !== this._lastWidth || transform.height !== this._lastHeight)) {
-                this._lastWidth = transform.width;
-                this._lastHeight = transform.height;
-                this.updateMaterial();
-            }
-        }
-    }
-
     private applyMaterial() {
         const sprite = this.getComponent(Sprite);
         if (!sprite) return;
@@ -85,11 +70,7 @@ export class EdgeGradientGlow extends Component {
         }
         sprite.customMaterial = this._materialInstance;
         
-        if (EDITOR) {
-            this.updateMaterial();
-        } else {
-            this.scheduleOnce(() => this.updateMaterial(), 0);
-        }
+        this.scheduleOnce(() => this.updateMaterial(), 0);
     }
 
     private updateMaterial() {

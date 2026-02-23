@@ -1,13 +1,11 @@
 import { _decorator, Component, Sprite, Material, Vec4, assetManager } from 'cc';
-import { EDITOR } from 'cc/env';
 
-const { ccclass, property, menu, executeInEditMode, requireComponent } = _decorator;
+const { ccclass, property, menu, requireComponent } = _decorator;
 
 const DEFAULT_MATERIAL_UUID = '341e0019-691c-4926-b3e3-c6ada2d916b7';
 
 @ccclass('GradientWithMask')
 @menu('Shaders/GradientWithMask')
-@executeInEditMode(true)
 @requireComponent(Sprite)
 export class GradientWithMask extends Component {
     private _materialInstance: Material | null = null;
@@ -58,11 +56,7 @@ export class GradientWithMask extends Component {
         }
         sprite.customMaterial = this._materialInstance;
         
-        if (EDITOR) {
-            this.updateMaterial();
-        } else {
-            this.scheduleOnce(() => this.updateMaterial(), 0);
-        }
+        this.scheduleOnce(() => this.updateMaterial(), 0);
     }
 
     private updateMaterial() {

@@ -1,5 +1,5 @@
 import { _decorator, Component, Label, CCInteger, UITransform, Overflow } from 'cc';
-const { ccclass, property, requireComponent, executeInEditMode } = _decorator;
+const { ccclass, property, requireComponent } = _decorator;
 
 /**
  * 多行文本裁剪组件
@@ -13,7 +13,6 @@ const { ccclass, property, requireComponent, executeInEditMode } = _decorator;
  */
 @ccclass('TextEllipsis')
 @requireComponent(Label)
-@executeInEditMode
 export class TextEllipsis extends Component {
     @property({
         type: CCInteger,

@@ -1,6 +1,6 @@
 import { _decorator, Component, Sprite, UITransform, CCInteger, CCFloat } from 'cc';
 
-const { ccclass, property, menu, executeInEditMode } = _decorator;
+const { ccclass, property, menu } = _decorator;
 
 enum FitMode {
     CONTAIN = 0,
@@ -11,7 +11,6 @@ enum FitMode {
 
 @ccclass('AspectRatioFitter')
 @menu('UI/AspectRatioFitter')
-@executeInEditMode(true)
 export class AspectRatioFitter extends Component {
     @property({ type: CCInteger, tooltip: '0: contain(完整显示) | 1: cover(填满容器) | 2: fitWidth(指定宽度) | 3: fitHeight(指定高度)' })
     get fitModeValue(): number {

@@ -1,7 +1,7 @@
 import { _decorator, Component, Prefab, Node, instantiate, SpriteFrame, Enum } from 'cc';
 import { RenderSettingItem, ClickMode } from './RenderSettingItem';
 
-const { ccclass, property, menu, executeInEditMode } = _decorator;
+const { ccclass, property, menu } = _decorator;
 
 @ccclass('SettingItemData')
 export class SettingItemData {
@@ -23,7 +23,6 @@ export class SettingItemData {
 
 @ccclass('RenderSettingItemList')
 @menu('Components/RenderSettingItemList')
-@executeInEditMode(true)
 export class RenderSettingItemList extends Component {
     @property({ type: Prefab, tooltip: 'SettingItem 预制体（根节点需挂 RenderSettingItem）' })
     itemPrefab: Prefab | null = null;
