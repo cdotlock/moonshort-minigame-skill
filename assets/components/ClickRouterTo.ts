@@ -49,6 +49,9 @@ export class ClickRouterTo extends Component {
     @property({ tooltip: '要传递的novelId（可选）', visible() { return (this as ClickRouterTo).mode !== RouterMode.Back; } })
     novelId: string = '';
 
+    @property({ tooltip: '是否实例到 TopLayer（覆盖所有 UI）', visible() { return (this as ClickRouterTo).navigationType === NavigationType.Wnd && (this as ClickRouterTo).mode !== RouterMode.Back; } })
+    topLayer: boolean = false;
+
     /** @deprecated 兼容旧数据，等同于 targetName */
     @property({ visible: false })
     get sceneName(): string { return this.targetName; }
@@ -98,9 +101,10 @@ export class ClickRouterTo extends Component {
             this._loading = false;
         } else {
             // 窗口跳转
+            const options = this.topLayer ? { topLayer: true } : undefined;
             const navigate = this.mode === RouterMode.Replace
                 ? Navigator.replace(name, params)
-                : Navigator.toWnd(name, params);
+                : Navigator.toWnd(name, params, options);
             navigate.then(() => {
                 this._loading = false;
             });

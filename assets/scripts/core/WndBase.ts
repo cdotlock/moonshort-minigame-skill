@@ -20,6 +20,14 @@ export class WndBase extends Component {
     /** 打开时传入的参数 */
     protected wndParams: Record<string, any> = {};
 
+    /** 由 WndManager 注入的关闭回调（避免循环依赖） */
+    private static _closeFn: (() => boolean) | null = null;
+
+    /** @internal WndManager 调用此方法注入关闭回调 */
+    static _setCloseFn(fn: () => boolean) {
+        WndBase._closeFn = fn;
+    }
+
     /**
      * 窗口打开时调用（子类重写）
      * @param params 打开窗口时传入的参数
@@ -53,9 +61,11 @@ export class WndBase extends Component {
      * 关闭自身（便捷方法，供子类或按钮事件调用）
      */
     closeSelf() {
-        // 延迟导入避免循环依赖
-        const { WndManager } = require('./WndManager');
-        WndManager.instance.close();
+        if (WndBase._closeFn) {
+            WndBase._closeFn();
+        } else {
+            console.warn('[WndBase] closeSelf: WndManager 未注入关闭回调');
+        }
     }
 
     /** @internal WndManager 调用，外部不要直接调用 */

@@ -1,18 +1,20 @@
-import { _decorator, Component, Label, Node } from 'cc';
-import { trackHomeCopyInvite, trackHomeInviteOpen } from '../analytics/UiEvents';
-import { GameManager } from '../scripts/core/GameManager';
-import { NativeBridge } from '../scripts/core/NativeBridge';
-import { Toast } from '../scripts/ui/Toast';
+import { _decorator, Label, Node } from 'cc';
+import { trackHomeCopyInvite, trackHomeInviteOpen } from '../../analytics/UiEvents';
+import { GameManager } from '../core/GameManager';
+import { NativeBridge } from '../core/NativeBridge';
+import { WndBase } from '../core/WndBase';
+import { Toast } from '../ui/Toast';
 
 const { ccclass, property, menu } = _decorator;
 
 /**
- * 邀请好友面板组件
+ * shareWnd 控制器
  * 显示用户邀请码、剩余次数，支持复制
+ * closeSelf() 继承自 WndBase，可直接拖到按钮事件上关闭本界面
  */
-@ccclass('RenderInviteFriend')
-@menu('Components/RenderInviteFriend')
-export class RenderInviteFriend extends Component {
+@ccclass('ShareWndController')
+@menu('WndControl/ShareWndController')
+export class ShareWndController extends WndBase {
     @property({ type: Label, tooltip: '显示邀请码的 Label' })
     inviteCodeLabel: Label | null = null;
 
@@ -30,20 +32,12 @@ export class RenderInviteFriend extends Component {
         }
     }
 
-    /**
-     * 打开面板
-     */
-    open() {
-        this.node.active = true;
+    protected onWndOpen(params: Record<string, any>): void {
+        // 仅在 shareWnd 上执行邀请码逻辑，
+        // 避免被其他 wnd（如 notificationsWnd / overviewWnd）误触发
+        if (this.wndName !== 'shareWnd') return;
         this.fetchData();
         trackHomeInviteOpen();
-    }
-
-    /**
-     * 关闭面板
-     */
-    close() {
-        this.node.active = false;
     }
 
     /**
@@ -56,7 +50,7 @@ export class RenderInviteFriend extends Component {
         try {
             const api = gameManager.getAPI();
             const response = await api.get('/apiv2/auth/invite');
-            
+
             if (!this.node || !this.node.isValid) return;
 
             this._inviteCode = response.inviteCode || '';
@@ -65,12 +59,12 @@ export class RenderInviteFriend extends Component {
 
             this.updateUI();
         } catch (error: any) {
-            console.error('[RenderInviteFriend] 获取邀请码信息失败:', error);
+            console.error('[ShareWndController] 获取邀请码信息失败:', error);
         }
     }
 
     /**
-     * 复制邀请码
+     * 复制邀请码（可拖到按钮事件）
      */
     async copyCode() {
         if (!this._inviteCode) {
@@ -78,12 +72,11 @@ export class RenderInviteFriend extends Component {
         }
 
         const success = await NativeBridge.copyToClipboard(this._inviteCode);
-        
+
         if (success) {
             Toast.show('Copied!');
         }
 
-        // 埋点
         trackHomeCopyInvite({
             invite_code: this._inviteCode,
             remaining: this._remaining,
@@ -94,12 +87,10 @@ export class RenderInviteFriend extends Component {
      * 更新 UI
      */
     private updateUI() {
-        // 更新邀请码
         if (this.inviteCodeLabel && this.inviteCodeLabel.isValid) {
             this.inviteCodeLabel.string = this._inviteCode;
         }
 
-        // 更新剩余次数
         if (this._remainingLabel && this._remainingLabel.isValid) {
             this._remainingLabel.string = `Remaining: ${this._remaining}/${this._limit}`;
         }

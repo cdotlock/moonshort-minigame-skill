@@ -2,7 +2,7 @@ import { director, Director, game, Game, Node, Scene } from 'cc';
 import { Analytics } from '../../analytics/AnalyticsManager';
 import { trackHistoryView, trackHomeView, trackIndexView, trackLoginView, trackNotificationsView, trackSettingsView } from '../../analytics/UiEvents';
 import { SceneParams } from './SceneParams';
-import { WndManager } from './WndManager';
+import { WndManager, WndOpenOptions } from './WndManager';
 
 /**
  * 合法的主场景名称
@@ -59,9 +59,9 @@ class NavigatorManager {
     // ==================== wnd 导航 ====================
 
     /** 打开 wnd（入栈） */
-    async toWnd(wndName: string, params?: Record<string, any>): Promise<Node | null> {
+    async toWnd(wndName: string, params?: Record<string, any>, options?: WndOpenOptions): Promise<Node | null> {
         this.init();
-        return WndManager.instance.open(wndName, params);
+        return WndManager.instance.open(wndName, params, options);
     }
 
     /** 替换当前 wnd */

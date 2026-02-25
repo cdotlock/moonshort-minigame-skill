@@ -1,15 +1,25 @@
 import { _decorator, Component, AssetManager, Canvas, director, Director, game, assetManager, instantiate, Layers, Node, Prefab, UITransform, Widget } from 'cc';
+import { SceneParams } from './SceneParams';
 import { WndBase } from './WndBase';
 
 const { ccclass } = _decorator;
 
 /**
- * Wnd 栈条目
+ * Wnd 打开选项
+ */
+export interface WndOpenOptions {
+    /** 将 wnd 实例化到 TopLayer（覆盖所有 UI，不隐藏下层 wnd） */
+    topLayer?: boolean;
+}
+
+/**
+ * Wnd 栋条目
  */
 interface WndEntry {
     name: string;
     node: Node;
     wndBase: WndBase | null;
+    topLayer?: boolean;
 }
 
 /**
@@ -95,6 +105,8 @@ export class WndManager extends Component {
             return;
         }
         WndManager._instance = this;
+        // 注入关闭回调给 WndBase（避免循环依赖）
+        WndBase._setCloseFn(() => this.close());
         director.on(Director.EVENT_BEFORE_SCENE_LOADING, this._onBeforeSceneLoading, this);
         director.on(Director.EVENT_AFTER_SCENE_LAUNCH, this._onAfterSceneLaunch, this);
     }
@@ -111,19 +123,21 @@ export class WndManager extends Component {
 
     /**
      * 打开一个 wnd（入栈），上一个 wnd 隐藏并暂停
+     * @param options.topLayer  将 wnd 实例化到 TopLayer（覆盖所有 UI，下层 wnd 保持可见）
      */
-    async open(wndName: string, params: Record<string, any> = {}): Promise<Node | null> {
+    async open(wndName: string, params: Record<string, any> = {}, options?: WndOpenOptions): Promise<Node | null> {
         if (this._loading) {
             console.warn('[WndManager] 正在加载中，忽略 open:', wndName);
             return null;
         }
 
         this._loading = true;
+        const useTopLayer = options?.topLayer === true;
 
         try {
-            const root = this._getWndRoot();
+            const root = useTopLayer ? this._getTopLayer() : this._getWndRoot();
             if (!root) {
-                console.error('[WndManager] 找不到 WndRoot');
+                console.error(`[WndManager] 找不到 ${useTopLayer ? 'TopLayer' : 'WndRoot'}`);
                 return null;
             }
 
@@ -137,7 +151,16 @@ export class WndManager extends Component {
             const topEntry = this._getTop();
             if (topEntry) {
                 topEntry.wndBase?._doPause();
-                topEntry.node.active = false;
+                // topLayer 模式下不隐藏下层 wnd（透过蒙版可见）
+                if (!useTopLayer) {
+                    topEntry.node.active = false;
+                }
+            }
+
+            // 将 wnd 参数写入 SceneParams，
+            // 以便子组件在 onLoad 阶段（addChild 触发）即可通过 SceneParams.get() 读取
+            if (params && Object.keys(params).length > 0) {
+                SceneParams.set(params);
             }
 
             // 实例化
@@ -149,10 +172,10 @@ export class WndManager extends Component {
             if (wndBase) wndBase.wndName = wndName;
 
             // 入栈
-            this._stack.push({ name: wndName, node, wndBase });
+            this._stack.push({ name: wndName, node, wndBase, topLayer: useTopLayer });
             wndBase?._doOpen(params);
 
-            console.log(`[WndManager] open: ${wndName}, 栈深度: ${this._stack.length}`);
+            console.log(`[WndManager] open: ${wndName}${useTopLayer ? ' (TopLayer)' : ''}, 栈深度: ${this._stack.length}`);
             this._emitStackChanged();
             return node;
         } finally {
@@ -248,6 +271,25 @@ export class WndManager extends Component {
 
     // ==================== 内部方法 ====================
 
+    /** 获取 TopLayer 节点（Canvas 下的最顶层节点） */
+    private _getTopLayer(): Node | null {
+        const scene = director.getScene();
+        if (!scene) return null;
+
+        const canvas = scene.getComponentInChildren(Canvas);
+        if (!canvas) {
+            console.error('[WndManager] 场景中找不到 Canvas');
+            return null;
+        }
+
+        const topLayer = canvas.node.getChildByName('TopLayer');
+        if (!topLayer) {
+            console.error('[WndManager] Canvas 中找不到 TopLayer 节点');
+            return null;
+        }
+        return topLayer;
+    }
+
     /** 获取或创建当前场景 Canvas 内的 WndRoot */
     private _getWndRoot(): Node | null {
         if (this._wndRoot?.isValid) return this._wndRoot;
@@ -338,7 +380,10 @@ export class WndManager extends Component {
         if (resumeBelow) {
             const newTop = this._getTop();
             if (newTop) {
-                newTop.node.active = true;
+                // topLayer 模式下层 wnd 未被隐藏，无需重新激活，但调用 resume 仍然必要
+                if (!entry.topLayer) {
+                    newTop.node.active = true;
+                }
                 newTop.wndBase?._doResume();
             }
         }

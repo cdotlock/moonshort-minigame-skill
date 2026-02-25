@@ -369,9 +369,7 @@
     "_disabledSprite": null,
     "_duration": 0.1,
     "_zoomScale": 1.2,
-    "_target": {
-      "__id__": 14
-    },
+    "_target": null,
     "_id": ""
   },
   {
@@ -926,9 +924,7 @@
     "_disabledSprite": null,
     "_duration": 0.1,
     "_zoomScale": 1.2,
-    "_target": {
-      "__id__": 14
-    },
+    "_target": null,
     "_id": ""
   },
   {
