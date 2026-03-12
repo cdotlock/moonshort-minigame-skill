@@ -265,7 +265,7 @@ Extract a reusable H5 mini-game framework from existing examples, then support A
 - [x] Merge `agent.md` guidance into `SKILL.md`
 - [x] Expand `list.md` with full game inventory
 - [x] Verify updated docs for consistency
-- [ ] Sync changes to GitHub
+- [x] Sync changes to GitHub
 
 ### 2026-03-13 (Progress)
 - Started the skill stability pass requested by the user.
@@ -279,3 +279,6 @@ Extract a reusable H5 mini-game framework from existing examples, then support A
 - Verified document consistency:
   - non-empty document check passed
   - `list.md` inventory count matches the 50 shipped game directories exactly
+- Synced the repository to GitHub:
+  - pushed `main` to `origin`
+  - current sync commit: `a598d5a`
